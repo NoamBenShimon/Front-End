@@ -239,7 +239,15 @@ if not errorlevel 1 (
 
 REM Start the development server
 echo %YELLOW%[6/6]%RESET% Starting development server...
-echo %BLUE%Running: !SELECTED_PKG_MANAGER! run dev -p %PORT%%RESET%
+set "DISPLAY_CMD="
+if "!SELECTED_PKG_MANAGER!"=="npm" (
+    set "DISPLAY_CMD=npm run dev -- -p %PORT%"
+) else if "!SELECTED_PKG_MANAGER!"=="yarn" (
+    set "DISPLAY_CMD=yarn dev -p %PORT%"
+) else if "!SELECTED_PKG_MANAGER!"=="pnpm" (
+    set "DISPLAY_CMD=pnpm dev -p %PORT%"
+)
+echo %BLUE%Running: !DISPLAY_CMD%%RESET%
 echo.
 echo %GREEN%Server starting... Press Ctrl+C to stop.%RESET%
 echo.
