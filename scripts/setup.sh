@@ -55,6 +55,19 @@ fi
 # ============================================
 PORT=${1:-$DEFAULT_PORT}
 
+# Validate PORT is numeric only (prevent command injection)
+if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}Error: Invalid port number \"$PORT\".${RESET}"
+    echo "Port must be a numeric value."
+    exit 1
+fi
+
+# Validate PORT is in valid range (1-65535)
+if [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
+    echo -e "${RED}Error: Port number must be between 1 and 65535.${RESET}"
+    exit 1
+fi
+
 # ============================================
 #   MAIN EXECUTION
 # ============================================
@@ -197,17 +210,17 @@ PORT_IN_USE=false
 
 # Try lsof first (more reliable)
 if command -v lsof >/dev/null 2>&1; then
-    if lsof -i :$PORT >/dev/null 2>&1; then
+    if lsof -i :"$PORT" >/dev/null 2>&1; then
         PORT_IN_USE=true
     fi
 # Fallback to netstat
 elif command -v netstat >/dev/null 2>&1; then
-    if netstat -an | grep -E "[:.]$PORT\s" | grep -q LISTEN; then
+    if netstat -an | grep -E "[:.]$PORT\\s" | grep -q LISTEN; then
         PORT_IN_USE=true
     fi
 # Fallback to ss (modern Linux)
 elif command -v ss >/dev/null 2>&1; then
-    if ss -ln | grep -E ":$PORT\s" >/dev/null 2>&1; then
+    if ss -ln | grep -E ":$PORT\\s" >/dev/null 2>&1; then
         PORT_IN_USE=true
     fi
 fi
@@ -238,13 +251,13 @@ echo ""
 
 case "$SELECTED_PKG_MANAGER" in
     npm)
-        npm run dev -- -p $PORT
+        npm run dev -- -p "$PORT"
         ;;
     yarn)
-        yarn dev -p $PORT
+        yarn dev -p "$PORT"
         ;;
     pnpm)
-        pnpm dev -p $PORT
+        pnpm dev -p "$PORT"
         ;;
 esac
 
