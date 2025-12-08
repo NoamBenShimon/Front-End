@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import SearchableSelect, { SelectItem } from '@/components/SearchableSelect';
 import EquipmentList, { EquipmentData } from '@/components/EquipmentList';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [schools] = useState<SelectItem[]>([
     { id: 1, name: 'Begin' },
     { id: 2, name: 'Ben-Gurion' }
@@ -16,6 +20,13 @@ export default function Home() {
   const [selectedEquipment, setSelectedEquipment] = useState<Set<number>>(new Set());
   const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check authentication and redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
 
   // Initialize all items as selected when equipment data loads
   useEffect(() => {
@@ -100,6 +111,11 @@ export default function Home() {
       return newMap;
     });
   };
+
+  // Don't render content if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Layout>
