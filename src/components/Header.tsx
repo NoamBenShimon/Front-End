@@ -1,6 +1,24 @@
+'use client';
+
 import Link from 'next/link';
+import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Header() {
+    const { isAuthenticated } = useAuth();
+
+    // Only access cart context when authenticated (CartProvider is available)
+    let cartEntries: { id: string }[] = [];
+    try {
+        const cart = useCart();
+        cartEntries = cart.cartEntries;
+    } catch {
+        // CartProvider not available (not authenticated)
+    }
+
+    const hasItems = cartEntries.length > 0;
+
     return (
         <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,6 +47,21 @@ export default function Header() {
                         >
                             Contact
                         </Link>
+                        {isAuthenticated && (
+                            <Link
+                                href="/cart"
+                                className="relative text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors"
+                                title="View Cart"
+                            >
+                                <Image
+                                    src={hasItems ? "/cart-full.svg" : "/cart-empty.svg"}
+                                    alt="Cart"
+                                    width={24}
+                                    height={24}
+                                    className="dark:invert"
+                                />
+                            </Link>
+                        )}
                     </div>
                 </div>
             </nav>
