@@ -7,6 +7,7 @@ import SearchableSelect, {SelectItem} from '@/components/SearchableSelect';
 import EquipmentList, {EquipmentData} from '@/components/EquipmentList';
 import SaveToCartButton from '@/components/SaveToCartButton';
 import {useAuth} from '@/contexts/AuthContext';
+import LoginForm from '@/components/LoginForm';
 
 // Define the API URL using the environment variable injected by Docker Compose.
 // CRITICAL: Next.js must be told which URL to use for the API Gateway service.
@@ -29,7 +30,16 @@ interface EquipmentItemResponse {
 export default function Home() {
     const router = useRouter();
     const {isAuthenticated} = useAuth();
-    
+
+    if (!isAuthenticated) {
+        // Render the login form directly if not authenticated
+        return (
+            <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+                <LoginForm />
+            </div>
+        );
+    }
+
     // State to track the currently selected items
     const [selection, setSelection] = useState<SelectionState>({
         school: null,
@@ -79,10 +89,10 @@ export default function Home() {
 
     // 1. Fetch Schools (Runs once on component mount)
     useEffect(() => {
-        // We pass 'false' for resetSelections since we are setting the initial data for schools
+        if (!isAuthenticated) return; // Only fetch schools if authenticated
         fetchData('/api/schools', setSchools, false);
-    }, [fetchData]);
-    
+    }, [fetchData, isAuthenticated]);
+
     // Initialize all items as selected when equipment data loads
     useEffect(() => {
         if (equipmentData) {
@@ -140,13 +150,13 @@ export default function Home() {
             console.log('Fetching from:', url);
             const response = await fetch(url);
             if (!response.ok) throw new Error(`Failed to fetch data from ${endpoint}. Status: ${response.status}`);
-            const items = await response.json();
-
+            const data = await response.json();
+            const itemsArray = Array.isArray(data.items) ? data.items : [];
             // Transform the Go backend response (array) into the expected structure
             const wrappedData: EquipmentData = {
                 classId: parseInt(`${selection.school?.id}${selection.grade?.id}${item.id}`, 10),
                 className: `${selection.school?.name} - Grade ${selection.grade?.name} - ${item.name}`,
-                items: (items || []).map((equipItem: EquipmentItemResponse) => ({
+                items: itemsArray.map((equipItem: EquipmentItemResponse) => ({
                     id: parseInt(equipItem.id, 10),
                     name: equipItem.name,
                     quantity: equipItem.quantity
@@ -182,10 +192,6 @@ export default function Home() {
         });
     };
 
-    // Don't render content if not authenticated
-    if (!isAuthenticated) {
-        return null;
-    }
 
     return (
         <Layout>

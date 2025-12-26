@@ -5,27 +5,52 @@ import * as api from '@/services/api';
 
 interface AuthContextType {
     isAuthenticated: boolean;
+    userid: string | null;
+    username: string | null;
     login: (username: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
-    // Optionally: user: User | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({children}: { children: ReactNode }) {
-    // Always start with false to match SSR, then update after hydration
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userid, setUserid] = useState<string | null>(null);
+    const [username, setUsername] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    // Helper: persist to localStorage
+    const persistAuth = (userid: string, username: string) => {
+        localStorage.setItem('userid', userid);
+        localStorage.setItem('username', username);
+    };
+    const clearPersistedAuth = () => {
+        localStorage.removeItem('userid');
+        localStorage.removeItem('username');
+    };
 
     useEffect(() => {
-        // Check authentication status from backend
+        // On mount, check auth status from backend or localStorage
         (async () => {
             try {
-                await api.checkAuth();
+                const data = await api.checkAuth();
                 setIsAuthenticated(true);
+                setUserid(data.userid);
+                setUsername(data.username);
+                persistAuth(data.userid, data.username);
             } catch (err) {
-                setIsAuthenticated(false);
+                // Fallback: try localStorage for session continuity (if backend is stateless)
+                const storedUserid = localStorage.getItem('userid');
+                const storedUsername = localStorage.getItem('username');
+                if (storedUserid && storedUsername) {
+                    setIsAuthenticated(true);
+                    setUserid(storedUserid);
+                    setUsername(storedUsername);
+                } else {
+                    setIsAuthenticated(false);
+                    setUserid(null);
+                    setUsername(null);
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -33,36 +58,39 @@ export function AuthProvider({children}: { children: ReactNode }) {
     }, []);
 
     const login = async (username: string, password: string) => {
-        setError(null);
         try {
-            await api.login({ username, password });
+            const data = await api.login({ username, password });
             setIsAuthenticated(true);
-        } catch (err: any) {
-            setError(err.message || 'Login failed');
+            setUserid(data.userid);
+            setUsername(username); // Backend does not return username, so use input
+            persistAuth(data.userid, username);
+        } catch (err) {
             setIsAuthenticated(false);
-            throw err; // So LoginForm can await and handle errors
+            setUserid(null);
+            setUsername(null);
+            clearPersistedAuth();
+            throw err;
         }
     };
 
     const logout = async () => {
-        setError(null);
         try {
             await api.logout();
-        } catch (err: any) {
+        } catch (err) {
             // Optionally show error, but always log out locally
         }
         setIsAuthenticated(false);
+        setUserid(null);
+        setUsername(null);
+        clearPersistedAuth();
     };
-
-    // Optionally expose error for UI feedback
-    // error,
 
     if (isLoading) {
         return null; // Prevent flash of wrong content
     }
 
     return (
-        <AuthContext.Provider value={{isAuthenticated, login, logout}}>
+        <AuthContext.Provider value={{isAuthenticated, userid, username, login, logout}}>
             {children}
         </AuthContext.Provider>
     );

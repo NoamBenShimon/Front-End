@@ -5,32 +5,51 @@
 
 import { CartEntryPayload } from '@/types/cart';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+if (!API_BASE) {
+    console.error('[CRITICAL] NEXT_PUBLIC_API_URL is not set. All API requests will fail. Set this in your .env.local or environment variables.');
+}
 
 // --- Auth ---
 export async function login(credentials: { username: string; password: string }) {
     const res = await fetch(`${API_BASE}/auth/login`, {
+    console.log('Attempting login with', credentials);
+    const res = await fetch(`${API_BASE}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
-        credentials: 'include', // for cookies/session if needed
+        credentials: 'include',
     });
-    if (!res.ok) return parseError(res, 'Login failed');
-    return res.json();
+    console.log('Login response status:', res.status);
+    if (!res.ok) {
+        let errorMsg = 'Login failed';
+        try {
+            const data = await res.json();
+            errorMsg = data?.error || errorMsg;
+            console.error('Login error from backend:', errorMsg);
+        } catch (e) {
+            console.error('Login error, could not parse backend error:', e);
+        }
+        throw new Error(errorMsg);
+    }
+    const data = await res.json();
+    console.log('Login successful, response data:', data);
+    return data;
 }
 
 export async function logout() {
-    const res = await fetch(`${API_BASE}/auth/logout`, {
+    // Call backend /api/logout to clear session
+    const res = await fetch(`${API_BASE}/api/logout`, {
         method: 'POST',
         credentials: 'include',
     });
     if (!res.ok) return parseError(res, 'Logout failed');
-    return res.json();
+    return res.json().catch(() => ({})); // In case backend returns no body
 }
 
 export async function checkAuth() {
-    // Checks if the user is authenticated (e.g., GET /auth/status or /auth/me)
-    const res = await fetch(`${API_BASE}/auth/status`, {
+    // Checks if the user is authenticated (e.g., GET /api/auth/status or /api/auth/me)
+    const res = await fetch(`${API_BASE}/api/auth/status`, {
         method: 'GET',
         credentials: 'include',
     });
