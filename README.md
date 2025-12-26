@@ -4,42 +4,66 @@ A modern Next.js website with a basic layout structure including header, main co
 
 ## Features
 
-- ✅ Next.js 16 with App Router
-- ✅ TypeScript support
-- ✅ Tailwind CSS for styling
-- ✅ Responsive design
-- ✅ Dark mode support
-- ✅ Reusable layout components (Header, Footer, Layout)
+- [X] Next.js 16 with App Router
+- [X] TypeScript support
+- [X] Tailwind CSS for styling
+- [X] Responsive design
+- [X] Dark mode support
+- [X] Reusable layout components (Header, Footer, Layout)
+- [X] Authentication system with session management
+- [X] Protected routes with automatic redirect
+- [X] Logout functionality with session invalidation
 
 ## Getting Started
 
-First, install the dependencies:
+### Quick Setup (Recommended)
+
+Use the automated setup scripts to check dependencies, install packages, and start the server:
+
+**Windows:**
+```cmd
+cd scripts
+setup.bat
+```
+
+**Linux/macOS:**
+```bash
+cd scripts
+chmod +x setup.sh  # First time only
+./setup.sh
+```
+
+The setup scripts will:
+- Check for Node.js and internet connectivity
+- Detect or let you choose a package manager (npm/yarn/pnpm)
+- Install dependencies if needed
+- Verify port availability
+- Start the development server
+
+For more details, see [scripts/README.md](scripts/README.md)
+
+### Manual Setup
+
+If you prefer manual setup:
 
 ```bash
 npm install
-```
-
-Then, run the development server:
-
-```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Authentication
+
+Session-based auth using sessionStorage. Login at `/login` with any non-empty credentials. Logout button appears in the header when authenticated.
+
 ## Project Structure
 
 ```
 src/
-├── app/
-│   ├── layout.tsx          # Root layout with metadata
-│   ├── page.tsx            # Homepage
-│   ├── globals.css         # Global styles
-│   └── favicon.ico         # Site favicon
-└── components/
-    ├── Layout.tsx          # Main layout wrapper with header and footer
-    ├── Header.tsx          # Navigation header component
-    └── Footer.tsx          # Footer component
+├── app/              # Next.js app router pages
+├── components/       # Reusable React components
+└── contexts/         # React contexts (auth, etc.)
 ```
 
 ## Available Scripts
