@@ -1,7 +1,6 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {useRouter} from 'next/navigation';
 import Layout from '@/components/Layout';
 import SearchableSelect, {SelectItem} from '@/components/SearchableSelect';
 import EquipmentList, {EquipmentData} from '@/components/EquipmentList';
@@ -27,13 +26,7 @@ interface EquipmentItemResponse {
 }
 
 export default function Home() {
-    const router = useRouter();
     const {isAuthenticated} = useAuth();
-
-    if (!isAuthenticated) {
-        // Consistency: Let ProtectedRoute handle unauthenticated state
-        return null;
-    }
 
     // State to track the currently selected items
     const [selection, setSelection] = useState<SelectionState>({
@@ -51,12 +44,6 @@ export default function Home() {
     const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
 
-    // Check authentication and redirect if not authenticated
-    useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, router]);
 
     // --- Utility Fetch Function ---
     // Memoize the function for use in useEffect dependencies
