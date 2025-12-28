@@ -1,7 +1,6 @@
 'use client';
 
 import {useState, useEffect, useCallback} from 'react';
-import {useRouter} from 'next/navigation';
 import Layout from '@/components/Layout';
 import SearchableSelect, {SelectItem} from '@/components/SearchableSelect';
 import EquipmentList, {EquipmentData} from '@/components/EquipmentList';
@@ -16,46 +15,38 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 interface SelectionState {
     school: SelectItem | null;
     grade: SelectItem | null;
-    class: SelectItem | null;
 }
 
 // Define the equipment item structure from Go backend
 interface EquipmentItemResponse {
-    id: string;
+    id: number;
     name: string;
     quantity: number;
 }
 
 export default function Home() {
-    const router = useRouter();
     const {isAuthenticated} = useAuth();
-    
+
+    // Removed redundant authentication check; ProtectedRoute in layout handles this
+
     // State to track the currently selected items
     const [selection, setSelection] = useState<SelectionState>({
         school: null,
         grade: null,
-        class: null,
     });
     
     const [schools, setSchools] = useState<SelectItem[]>([]);
     const [grades, setGrades] = useState<SelectItem[]>([]);
-    const [classes, setClasses] = useState<SelectItem[]>([]);
     const [equipmentData, setEquipmentData] = useState<EquipmentData | null>(null);
     
     const [selectedEquipment, setSelectedEquipment] = useState<Set<number>>(new Set());
     const [quantities, setQuantities] = useState<Map<number, number>>(new Map());
     const [isLoading, setIsLoading] = useState(false);
 
-    // Check authentication and redirect if not authenticated
-    useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, router]);
 
     // --- Utility Fetch Function ---
     // Memoize the function for use in useEffect dependencies
-    const fetchData = useCallback(async (endpoint: string, setter: (data: SelectItem[] | any) => void, resetSelections: boolean = true) => {
+    const fetchData = useCallback(async (endpoint: string, setter: (data: SelectItem[] | EquipmentItemResponse[] | any) => void, resetSelections: boolean = true) => {
         if (resetSelections) {
             setter([]);
             setEquipmentData(null);
@@ -69,6 +60,15 @@ export default function Home() {
             const response = await fetch(url);
             if (!response.ok) throw new Error(`Failed to fetch data from ${endpoint}. Status: ${response.status}`);
             const data = await response.json();
+            // If fetching equipment, convert id to number
+            if (endpoint.startsWith('/api/equipment')) {
+                if (data.items) {
+                    data.items = data.items.map((item: any) => ({
+                        ...item,
+                        id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id
+                    }));
+                }
+            }
             setter(data);
         } catch (error) {
             console.error(`Error fetching data for ${endpoint}:`, error);
@@ -79,19 +79,19 @@ export default function Home() {
 
     // 1. Fetch Schools (Runs once on component mount)
     useEffect(() => {
-        // We pass 'false' for resetSelections since we are setting the initial data for schools
+        if (!isAuthenticated) return; // Only fetch schools if authenticated
         fetchData('/api/schools', setSchools, false);
-    }, [fetchData]);
-    
+    }, [fetchData, isAuthenticated]);
+
     // Initialize all items as selected when equipment data loads
     useEffect(() => {
         if (equipmentData) {
-            const allIds = new Set(equipmentData.items.map(item => parseInt(item.id as any))); // TODO: Settle if using numberor string
+            const allIds = new Set(equipmentData.items.map(item => item.id));
             setSelectedEquipment(allIds);
 
             const initialQuantities = new Map(
-                equipmentData.items.map(item => [parseInt(item.id as any), item.quantity])
-            ); // TODO: Settle if using numberor string
+                equipmentData.items.map(item => [item.id, item.quantity])
+            );
             setQuantities(initialQuantities);
         }
     }, [equipmentData]);
@@ -102,9 +102,8 @@ export default function Home() {
     const handleSchoolSelect = useCallback((item: SelectItem) => {
         console.log('Selected School:', item.name);
         // 1. Reset lower selections
-        setSelection({ school: item, grade: null, class: null });
+        setSelection({ school: item, grade: null });
         setGrades([]);
-        setClasses([]);
         setEquipmentData(null);
 
         // 2. Fetch Grades immediately (CRITICAL FIX: Use 'school_id' and correct ID access)
@@ -115,52 +114,14 @@ export default function Home() {
     const handleGradeSelect = useCallback((item: SelectItem) => {
         console.log('Selected Grade:', item.name);
         // 1. Retain school selection, reset class
-        setSelection(prev => ({ ...prev, grade: item, class: null }));
-        setClasses([]);
+        setSelection(prev => ({ ...prev, grade: item }));
         setEquipmentData(null);
 
-        // 2. Fetch Classes immediately (CRITICAL FIX: Pass BOTH school_id and grade_id)
-        const endpoint = `/api/classes?school_id=${selection.school?.id}&grade_id=${item.id}`;
-        fetchData(endpoint, setClasses);
+        // Fetch equipment directly (no class)
+        const endpoint = `/api/equipment?school_id=${selection.school?.id}&grade_id=${item.id}`;
+        fetchData(endpoint, setEquipmentData);
 
     }, [fetchData, selection.school?.id]);
-
-    const handleClassSelect = useCallback(async (item: SelectItem) => {
-        console.log('Selected Class:', item.name);
-        // 1. Retain school and grade, set class
-        setSelection(prev => ({ ...prev, class: item }));
-        setEquipmentData(null);
-
-        // 2. Fetch Equipment immediately
-        const endpoint = `/api/equipment?school_id=${selection.school?.id}&grade_id=${selection.grade?.id}&class_id=${item.id}`;
-
-        setIsLoading(true);
-        try {
-            const url = `${API_BASE_URL}${endpoint}`;
-            console.log('Fetching from:', url);
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Failed to fetch data from ${endpoint}. Status: ${response.status}`);
-            const items = await response.json();
-
-            // Transform the Go backend response (array) into the expected structure
-            const wrappedData: EquipmentData = {
-                classId: parseInt(`${selection.school?.id}${selection.grade?.id}${item.id}`, 10),
-                className: `${selection.school?.name} - Grade ${selection.grade?.name} - ${item.name}`,
-                items: (items || []).map((equipItem: EquipmentItemResponse) => ({
-                    id: parseInt(equipItem.id, 10),
-                    name: equipItem.name,
-                    quantity: equipItem.quantity
-                }))
-            };
-
-            setEquipmentData(wrappedData);
-        } catch (error) {
-            console.error(`Error fetching equipment:`, error);
-        } finally {
-            setIsLoading(false);
-        }
-
-    }, [selection.school?.id, selection.grade?.id, selection.school?.name, selection.grade?.name]);
 
     const handleToggleEquipment = (id: number) => {
         setSelectedEquipment(prev => {
@@ -182,10 +143,6 @@ export default function Home() {
         });
     };
 
-    // Don't render content if not authenticated
-    if (!isAuthenticated) {
-        return null;
-    }
 
     return (
         <Layout>
@@ -220,17 +177,6 @@ export default function Home() {
                         />
                     )}
 
-                    {/* Class Selector - Enabled after Grade is selected */}
-                    {classes.length > 0 && (
-                        <SearchableSelect
-                            label="Class"
-                            items={classes}
-                            placeholder={selection.grade ? "Search Class" : "Select Grade First"}
-                            onSelect={handleClassSelect}
-                            disabled={!selection.grade || isLoading}
-                        />
-                    )}
-
                     {isLoading && (
                         <div className="text-center py-4">
                             <p className="text-zinc-600 dark:text-zinc-400">Loading...</p>
@@ -249,7 +195,6 @@ export default function Home() {
                             <SaveToCartButton
                                 school={selection.school ? { id: Number(selection.school.id), name: selection.school.name } : null}
                                 grade={selection.grade ? { id: Number(selection.grade.id), name: selection.grade.name } : null}
-                                classInfo={selection.class ? { id: Number(selection.class.id), name: selection.class.name } : null}
                                 selectedIds={selectedEquipment}
                                 quantities={quantities}
                                 items={equipmentData.items}
