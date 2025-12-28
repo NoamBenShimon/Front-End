@@ -1,17 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { useAuth } from '@/contexts/AuthContext';
 import { useCart, CartEntry } from '@/contexts/CartContext';
 
 export default function CartPage() {
-    const router = useRouter();
-    const { isAuthenticated } = useAuth();
     const { cartEntries, removeFromCart, clearCart } = useCart();
 
     // Dialog state
@@ -25,19 +21,12 @@ export default function CartPage() {
         type: 'remove',
     });
 
-    // Check authentication and redirect if not authenticated
-    useEffect(() => {
-        if (!isAuthenticated) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, router]);
-
     const handleRemoveClick = (entry: CartEntry) => {
         setDialogState({
             isOpen: true,
             type: 'remove',
             entryId: entry.id,
-            entryName: `${entry.school.name} - ${entry.grade.name} - ${entry.class.name}`,
+            entryName: `${entry.school.name} - ${entry.grade.name}`,
         });
     };
 
@@ -73,13 +62,12 @@ export default function CartPage() {
 
     // Calculate total items across all entries
     const totalItems = cartEntries.reduce(
-        (sum, entry) => sum + entry.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
+        (sum, entry) => sum + (Array.isArray(entry.items) ? entry.items.reduce((itemSum, item) => itemSum + item.quantity, 0) : 0),
         0
     );
 
-    if (!isAuthenticated) {
-        return null;
-    }
+    // Debug: log cartEntries on every render
+    console.log('[CartPage] render, cartEntries:', cartEntries);
 
     return (
         <Layout>
@@ -147,7 +135,7 @@ export default function CartPage() {
                                                 {entry.school.name}
                                             </h3>
                                             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                {entry.grade.name} • {entry.class.name}
+                                                {entry.grade.name}
                                             </p>
                                             <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
                                                 Added {formatDate(entry.timestamp)}
@@ -223,4 +211,3 @@ export default function CartPage() {
         </Layout>
     );
 }
-
