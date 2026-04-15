@@ -320,17 +320,12 @@ describe('CartPage', () => {
             ];
         });
 
-        it('should show disabled checkout button', () => {
+        it('should show checkout link pointing to /checkout', () => {
             render(<CartPage />);
 
-            const checkoutButton = screen.getByRole('button', { name: /proceed to checkout/i });
-            expect(checkoutButton).toBeDisabled();
-        });
-
-        it('should show coming soon message', () => {
-            render(<CartPage />);
-
-            expect(screen.getByText(/checkout functionality will be available soon/i)).toBeInTheDocument();
+            const checkoutLink = screen.getByRole('link', { name: /proceed to checkout/i });
+            expect(checkoutLink).toBeInTheDocument();
+            expect(checkoutLink).toHaveAttribute('href', '/checkout');
         });
     });
 
