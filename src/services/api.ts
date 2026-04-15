@@ -10,6 +10,7 @@
  */
 
 import { CartEntryPayload } from '@/types/cart';
+import { CreateOrderPayload, Order, PaymentSession, PaymentResult } from '@/types/order';
 
 /**
  * Gets the API base URL.
@@ -185,5 +186,93 @@ function parseError(res: Response, fallback: string): Promise<never> {
     }).catch(() => {
         throw new Error(fallback);
     });
+}
+
+// =============================================================================
+// Order API
+// =============================================================================
+
+/**
+ * Creates a new order from the user's cart.
+ *
+ * @param payload - The order creation payload with userId and item groups
+ * @returns Promise resolving to the created Order
+ * @throws {Error} If order creation fails
+ */
+export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
+    const res = await fetch(`${getApiBase()}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to create order');
+    return res.json();
+}
+
+/**
+ * Fetches an order by its ID.
+ *
+ * @param orderId - The unique order identifier
+ * @returns Promise resolving to the Order
+ * @throws {Error} If order fetch fails
+ */
+export async function getOrder(orderId: string): Promise<Order> {
+    const res = await fetch(`${getApiBase()}/api/orders/${encodeURIComponent(orderId)}`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to fetch order');
+    return res.json();
+}
+
+// =============================================================================
+// Payment API
+// =============================================================================
+
+/**
+ * Creates a payment session with the backend.
+ * The backend communicates with the configured payment provider
+ * and returns a redirect URL.
+ *
+ * @param orderId - The order to pay for
+ * @param callbackUrls - Success and failure redirect URLs
+ * @returns Promise resolving to a PaymentSession with redirect URL
+ * @throws {Error} If session creation fails
+ */
+export async function createPaymentSession(
+    orderId: string,
+    callbackUrls: { successUrl: string; failureUrl: string }
+): Promise<PaymentSession> {
+    const res = await fetch(`${getApiBase()}/api/payments/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, ...callbackUrls }),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to create payment session');
+    return res.json();
+}
+
+/**
+ * Verifies a payment result with the backend after provider redirect.
+ *
+ * @param orderId - The order ID
+ * @param transactionId - The provider's transaction ID from the callback URL
+ * @returns Promise resolving to the verified PaymentResult
+ * @throws {Error} If verification fails
+ */
+export async function verifyPaymentResult(
+    orderId: string,
+    transactionId: string
+): Promise<PaymentResult> {
+    const res = await fetch(`${getApiBase()}/api/payments/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, transactionId }),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to verify payment');
+    return res.json();
 }
 
