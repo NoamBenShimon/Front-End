@@ -60,9 +60,18 @@ export default function CartPage() {
         });
     };
 
+    const formatCurrency = (amount: number) => `${amount.toFixed(2)} ILS`;
+
     // Calculate total items across all entries
     const totalItems = cartEntries.reduce(
         (sum, entry) => sum + (Array.isArray(entry.items) ? entry.items.reduce((itemSum, item) => itemSum + item.quantity, 0) : 0),
+        0
+    );
+
+    const totalCost = cartEntries.reduce(
+        (sum, entry) => sum + (Array.isArray(entry.items)
+            ? entry.items.reduce((itemSum, item) => itemSum + item.quantity * (item.unitPrice ?? 1), 0)
+            : 0),
         0
     );
 
@@ -117,7 +126,9 @@ export default function CartPage() {
                                 <span className="font-semibold text-zinc-900 dark:text-white">{cartEntries.length}</span>
                                 {cartEntries.length === 1 ? ' equipment list' : ' equipment lists'} •{' '}
                                 <span className="font-semibold text-zinc-900 dark:text-white">{totalItems}</span>
-                                {totalItems === 1 ? ' item' : ' items'} total
+                                {totalItems === 1 ? ' item' : ' items'} total •{' '}
+                                <span className="font-semibold text-zinc-900 dark:text-white">{formatCurrency(totalCost)}</span>
+                                {' '}total cost
                             </p>
                         </div>
 
@@ -159,17 +170,43 @@ export default function CartPage() {
 
                                     {/* Items list */}
                                     <div className="p-4">
-                                        <div className="grid grid-cols-[1fr_auto] gap-2 text-sm">
-                                            {entry.items.map((item) => (
-                                                <div key={item.id} className="contents">
-                                                    <span className="text-zinc-700 dark:text-zinc-300">
-                                                        {item.name}
-                                                    </span>
-                                                    <span className="text-zinc-500 dark:text-zinc-400 text-right">
-                                                        ×{item.quantity}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 text-sm">
+                                            <div className="contents text-xs uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                                                <span>Item</span>
+                                                <span className="text-right">Qty</span>
+                                                <span className="text-right">Unit Price</span>
+                                                <span className="text-right">Line Total</span>
+                                            </div>
+                                            {entry.items.map((item) => {
+                                                const unitPrice = item.unitPrice ?? 1;
+                                                const lineTotal = unitPrice * item.quantity;
+
+                                                return (
+                                                    <div key={item.id} className="contents">
+                                                        <span className="text-zinc-700 dark:text-zinc-300">
+                                                            {item.name}
+                                                        </span>
+                                                        <span className="text-zinc-500 dark:text-zinc-400 text-right">
+                                                            ×{item.quantity}
+                                                        </span>
+                                                        <span className="text-zinc-500 dark:text-zinc-400 text-right">
+                                                            {formatCurrency(unitPrice)}
+                                                        </span>
+                                                        <span className="text-zinc-700 dark:text-zinc-300 text-right">
+                                                            {formatCurrency(lineTotal)}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="mt-3 flex justify-end text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                            Subtotal: {formatCurrency(
+                                                entry.items.reduce(
+                                                    (sum, item) => sum + item.quantity * (item.unitPrice ?? 1),
+                                                    0
+                                                )
+                                            )}
                                         </div>
                                     </div>
                                 </div>

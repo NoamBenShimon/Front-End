@@ -129,6 +129,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     items: entry.items.map(item => ({
                         ...item,
                         id: Number(item.id),
+                        unitPrice: item.unitPrice ?? 1, // TODO: Replace with backend-provided per-item prices.
                     })),
                 };
                 return [...prev, newEntry];
@@ -150,6 +151,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 items: entry.items.map(item => ({
                     ...item,
                     id: Number(item.id),
+                    unitPrice: item.unitPrice ?? 1, // TODO: Replace with backend-provided per-item prices.
                 })),
             };
             const updated = [...current, newEntry];

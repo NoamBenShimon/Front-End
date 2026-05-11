@@ -17,6 +17,8 @@ export interface CartItem {
     name: string;
     /** Quantity of this item in the cart */
     quantity: number;
+    /** Server-provided unit price (ILS) */
+    unitPrice?: number;
 }
 
 /**
@@ -41,4 +43,3 @@ export interface CartEntryPayload {
     /** List of equipment items in this cart entry */
     items: CartItem[];
 }
-

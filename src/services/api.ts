@@ -128,7 +128,8 @@ export async function getCart(userid: string) {
         credentials: 'include',
     });
     if (!res.ok) return parseError(res, 'Failed to fetch cart');
-    return res.json();
+    const data = await res.json();
+    return applyCartPricing(data);
 }
 
 /**
@@ -151,10 +152,13 @@ export async function updateCart(userid: string, items: CartEntryPayload[]) {
             ...entry.grade,
             id: String(entry.grade.id)
         },
-        items: entry.items.map(item => ({
-            ...item,
-            id: String(item.id)
-        }))
+        items: entry.items.map(item => {
+            const { unitPrice, ...rest } = item;
+            return {
+                ...rest,
+                id: String(item.id)
+            };
+        })
     }));
     const res = await fetch(`${getApiBase()}/api/cart?userid=${encodeURIComponent(userid)}`, {
         method: 'POST',
@@ -164,6 +168,22 @@ export async function updateCart(userid: string, items: CartEntryPayload[]) {
     });
     if (!res.ok) return parseError(res, 'Failed to update cart');
     return res.json();
+}
+
+function applyCartPricing(data: any) {
+    const placeholderUnitPrice = 1; // TODO: Replace with backend-provided per-item prices.
+
+    if (!Array.isArray(data)) return [];
+
+    return data.map((entry: any) => ({
+        ...entry,
+        items: Array.isArray(entry.items)
+            ? entry.items.map((item: any) => ({
+                ...item,
+                unitPrice: typeof item.unitPrice === 'number' ? item.unitPrice : placeholderUnitPrice,
+            }))
+            : [],
+    }));
 }
 
 // =============================================================================
@@ -275,4 +295,3 @@ export async function verifyPaymentResult(
     if (!res.ok) return parseError(res, 'Failed to verify payment');
     return res.json();
 }
-
