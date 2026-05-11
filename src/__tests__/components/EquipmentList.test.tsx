@@ -173,7 +173,7 @@ describe('EquipmentList', () => {
             expect(mockOnQuantityChange).toHaveBeenCalledWith(1, 0);
         });
 
-        it('should clamp quantity to maximum 99', async () => {
+        it('should clamp quantity to the initial item quantity', async () => {
             render(<EquipmentList {...defaultProps} />);
             const user = userEvent.setup();
 
@@ -184,7 +184,7 @@ describe('EquipmentList', () => {
             // Should be clamped in some calls
             const calls = mockOnQuantityChange.mock.calls;
             const lastCall = calls[calls.length - 1];
-            expect(lastCall[1]).toBeLessThanOrEqual(99);
+            expect(lastCall[1]).toBeLessThanOrEqual(5);
         });
     });
 
@@ -193,9 +193,11 @@ describe('EquipmentList', () => {
             render(<EquipmentList {...defaultProps} />);
 
             const inputs = screen.getAllByRole('spinbutton');
-            inputs.forEach(input => {
+            const expectedMax = ['5', '10', '2', '1'];
+
+            inputs.forEach((input, index) => {
                 expect(input).toHaveAttribute('min', '0');
-                expect(input).toHaveAttribute('max', '99');
+                expect(input).toHaveAttribute('max', expectedMax[index]);
             });
         });
     });

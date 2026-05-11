@@ -21,7 +21,6 @@ interface EquipmentListProps {
 }
 
 const MIN_QUANTITY = 0;
-const MAX_QUANTITY = 99;
 
 export default function EquipmentList({
                                           data,
@@ -50,6 +49,8 @@ export default function EquipmentList({
                     {data.items.map((item) => {
                         const isSelected = selectedIds.has(item.id);
                         const currentQuantity = quantities.get(item.id) ?? item.quantity;
+                        const maxQuantity = item.quantity;
+                        // TODO: This max is enforced only in the frontend; backend should validate as well.
 
                         return (
                             <div
@@ -73,11 +74,11 @@ export default function EquipmentList({
                                     <input
                                         type="number"
                                         min={MIN_QUANTITY}
-                                        max={MAX_QUANTITY}
+                                        max={maxQuantity}
                                         value={currentQuantity}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            const clamped = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, val));
+                                            const clamped = Math.max(MIN_QUANTITY, Math.min(maxQuantity, val));
                                             onQuantityChange(item.id, clamped);
                                         }}
                                         disabled={!isSelected}
@@ -120,4 +121,3 @@ export default function EquipmentList({
         </div>
     );
 }
-
