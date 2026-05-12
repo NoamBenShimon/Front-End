@@ -4,7 +4,7 @@
  * These tests mock the CartContext to provide different states
  */
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 // Mock next/link
@@ -163,7 +163,9 @@ describe('CartPage', () => {
             render(<CartPage />);
 
             // Total: 5 + 10 + 3 = 18 items
-            expect(screen.getByText(/18/)).toBeInTheDocument();
+            const summary = screen.getByText(/items total/i).closest('p');
+            expect(summary).not.toBeNull();
+            expect(within(summary as HTMLElement).getByText(/^18$/)).toBeInTheDocument();
             expect(screen.getByText(/items total/i)).toBeInTheDocument();
         });
 
