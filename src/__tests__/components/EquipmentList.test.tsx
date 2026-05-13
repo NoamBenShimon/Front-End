@@ -13,10 +13,10 @@ const mockEquipmentData: EquipmentData = {
     classId: 1,
     className: 'Grade 1 Equipment',
     items: [
-        { id: 1, name: 'Notebook', quantity: 5 },
-        { id: 2, name: 'Pencil', quantity: 10 },
-        { id: 3, name: 'Eraser', quantity: 2 },
-        { id: 4, name: 'Ruler', quantity: 1 },
+        { id: 1, name: 'Notebook', quantity: 5, unitPrice: 12.5 },
+        { id: 2, name: 'Pencil', quantity: 10, unitPrice: 3 },
+        { id: 3, name: 'Eraser', quantity: 2, unitPrice: 1.25 },
+        { id: 4, name: 'Ruler', quantity: 1, unitPrice: 6.75 },
     ],
 };
 
@@ -61,7 +61,17 @@ describe('EquipmentList', () => {
             render(<EquipmentList {...defaultProps} />);
 
             expect(screen.getByText('Item')).toBeInTheDocument();
+            expect(screen.getByText('Price')).toBeInTheDocument();
             expect(screen.getByText('Quantity')).toBeInTheDocument();
+        });
+
+        it('should render item prices', () => {
+            render(<EquipmentList {...defaultProps} />);
+
+            expect(screen.getByText('12.50 ILS')).toBeInTheDocument();
+            expect(screen.getByText('3.00 ILS')).toBeInTheDocument();
+            expect(screen.getByText('1.25 ILS')).toBeInTheDocument();
+            expect(screen.getByText('6.75 ILS')).toBeInTheDocument();
         });
 
         it('should render quantity inputs for each item', () => {
@@ -202,4 +212,3 @@ describe('EquipmentList', () => {
         });
     });
 });
-

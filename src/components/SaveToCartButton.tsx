@@ -10,7 +10,7 @@ interface SaveToCartButtonProps {
     grade: { id: number; name: string } | null;
     selectedIds: Set<number>;
     quantities: Map<number, number>;
-    items: { id: number; name: string; quantity: number }[];
+    items: { id: number; name: string; quantity: number; unitPrice?: number }[];
     disabled?: boolean;
 }
 
@@ -38,6 +38,7 @@ export default function SaveToCartButton({
                 id: Number(item.id), // Ensure id is number
                 name: item.name,
                 quantity: quantities.get(item.id) ?? item.quantity,
+                unitPrice: item.unitPrice,
             }))
             .filter(item => item.quantity > 0);
 
