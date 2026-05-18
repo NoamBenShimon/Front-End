@@ -21,7 +21,7 @@
  */
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from 'react';
 import * as api from '@/services/api';
 import { CartEntryPayload, CartItem } from '@/types/cart';
 import { useAuth } from './AuthContext';
@@ -61,6 +61,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [cartEntries, setCartEntries] = useState<CartEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Serialize all cart mutations so concurrent add/remove/clear calls never
+    // overlap and overwrite each other (e.g. two rapid "Save to Cart" clicks
+    // both reading the same server snapshot and racing on the write).
+    const mutationQueueRef = useRef<Promise<void>>(Promise.resolve());
+
+    const enqueueMutation = useCallback((task: () => Promise<void>) => {
+        const next = mutationQueueRef.current.then(task, task);
+        mutationQueueRef.current = next.catch(() => {});
+        return next;
+    }, []);
 
     const fetchCart = useCallback(async () => {
         if (!userid) {
@@ -109,34 +120,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, [fetchCart, isAuthenticated]);
 
     const addToCart = useCallback(async (entry: CartEntryPayload) => {
-        setError(null);
-        if (!userid) throw new Error('Not authenticated');
-        try {
-            // Optimistically update local state first
-            setCartEntries(prev => {
-                const newEntry = {
-                    ...entry,
-                    id: Date.now().toString(),
-                    timestamp: Date.now(),
-                    school: {
-                        ...entry.school,
-                        id: Number(entry.school.id),
-                    },
-                    grade: {
-                        ...entry.grade,
-                        id: Number(entry.grade.id),
-                    },
-                    items: entry.items.map(item => ({
-                        ...item,
-                        id: Number(item.id),
-                        unitPrice: item.unitPrice ?? 1, // TODO: Replace with backend-provided per-item prices.
-                    })),
-                };
-                return [...prev, newEntry];
-            });
-            // Now update backend
-            const current = await api.getCart(userid);
-            const newEntry = {
+        if (!userid) return;
+        return enqueueMutation(async () => {
+            setError(null);
+            const newEntry: CartEntry = {
                 ...entry,
                 id: Date.now().toString(),
                 timestamp: Date.now(),
@@ -154,42 +141,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     unitPrice: item.unitPrice ?? 1, // TODO: Replace with backend-provided per-item prices.
                 })),
             };
-            const updated = [...current, newEntry];
-            await api.updateCart(userid, updated);
-            await fetchCart(); // Always refresh from backend
-        } catch (err: any) {
-            setError(err.message || 'Failed to add to cart');
-        }
-    }, [userid, fetchCart]);
+            try {
+                const current = (await api.getCart(userid)) as CartEntry[];
+                const next = [...current, newEntry];
+                setCartEntries(next); // Optimistic update.
+                await api.updateCart(userid, next);
+                await fetchCart(); // Reconcile with backend (gets real ids/prices).
+            } catch (err: any) {
+                setError(err.message || 'Failed to add to cart');
+                await fetchCart(); // Roll back to authoritative server state.
+            }
+        });
+    }, [userid, fetchCart, enqueueMutation]);
 
     const removeFromCart = useCallback(async (id: string) => {
-        setError(null);
-        if (!userid) throw new Error('Not authenticated');
-        try {
-            // Optimistically update local state first
-            setCartEntries(prev => prev.filter((entry: any) => entry.id !== id));
-            const current = await api.getCart(userid);
-            const updated = current.filter((entry: any) => entry.id !== id);
-            await api.updateCart(userid, updated);
-            // After backend update, re-fetch to ensure consistency
-            await fetchCart();
-        } catch (err: any) {
-            setError(err.message || 'Failed to remove from cart');
-        }
-    }, [userid, fetchCart]);
+        if (!userid) return;
+        return enqueueMutation(async () => {
+            setError(null);
+            try {
+                const current = (await api.getCart(userid)) as CartEntry[];
+                const next = current.filter(entry => entry.id !== id);
+                setCartEntries(next);
+                await api.updateCart(userid, next);
+                await fetchCart();
+            } catch (err: any) {
+                setError(err.message || 'Failed to remove from cart');
+                await fetchCart();
+            }
+        });
+    }, [userid, fetchCart, enqueueMutation]);
 
     const clearCart = useCallback(async () => {
-        setError(null);
-        if (!userid) throw new Error('Not authenticated');
-        try {
-            // Optimistically update local state first
+        if (!userid) return;
+        return enqueueMutation(async () => {
+            setError(null);
             setCartEntries([]);
-            await api.updateCart(userid, []);
-            await fetchCart(); // Always refresh from backend
-        } catch (err: any) {
-            setError(err.message || 'Failed to clear cart');
-        }
-    }, [userid, fetchCart]);
+            try {
+                await api.updateCart(userid, []);
+                await fetchCart();
+            } catch (err: any) {
+                setError(err.message || 'Failed to clear cart');
+                await fetchCart();
+            }
+        });
+    }, [userid, fetchCart, enqueueMutation]);
 
     const refreshCart = fetchCart;
 

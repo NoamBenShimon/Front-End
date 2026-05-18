@@ -1,15 +1,10 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 
-function CheckoutFailureContent() {
-    const searchParams = useSearchParams();
-    const orderId = searchParams.get('orderId');
-    const errorMessage = searchParams.get('error');
-
+function PaymentCancelContent() {
     return (
         <Layout>
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -20,16 +15,11 @@ function CheckoutFailureContent() {
                         </svg>
                     </div>
                     <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
-                        Payment Failed
+                        Payment Cancelled
                     </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 mb-2">
-                        {errorMessage || 'Your payment could not be processed. Please try again.'}
+                    <p className="text-zinc-500 dark:text-zinc-400 mb-8">
+                        Your payment was cancelled. You can try again or return to your cart.
                     </p>
-                    {orderId && (
-                        <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-8">
-                            Order ID: {orderId}
-                        </p>
-                    )}
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
@@ -51,7 +41,7 @@ function CheckoutFailureContent() {
     );
 }
 
-export default function CheckoutFailurePage() {
+export default function PaymentCancelPage() {
     return (
         <Suspense fallback={
             <Layout>
@@ -64,7 +54,8 @@ export default function CheckoutFailurePage() {
                 </div>
             </Layout>
         }>
-            <CheckoutFailureContent />
+            <PaymentCancelContent />
         </Suspense>
     );
 }
+

@@ -66,7 +66,10 @@ export default function Home() {
                 if (data.items) {
                     data.items = data.items.map((item: any) => ({
                         ...item,
-                        id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id
+                        id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
+                        unitPrice: typeof item.unitPrice === 'number'
+                            ? item.unitPrice
+                            : (typeof item.price === 'number' ? item.price : item.unitPrice),
                     }));
                 }
             }

@@ -4,14 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { useCart } from '@/contexts/CartContext';
-import { useOrder } from '@/contexts/OrderContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPaymentProvider } from '@/services/payment';
-import { OrderGroup } from '@/types/order';
+import { createCheckoutSession } from '@/services/api';
 
 export default function CheckoutPage() {
     const { cartEntries } = useCart();
-    const { createOrder } = useOrder();
     const { userid } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,30 +34,15 @@ export default function CheckoutPage() {
         setError(null);
 
         try {
-            // Convert cart entries to order groups
-            const groups: OrderGroup[] = cartEntries.map(entry => ({
-                school: entry.school,
-                grade: entry.grade,
-                items: entry.items.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    quantity: item.quantity,
-                })),
-            }));
+            const totalAmountCents = Math.max(1, Math.round(totalCost * 100));
 
-            // Create order via backend
-            const order = await createOrder({ userId: userid, groups });
-
-            // Create payment session
-            const provider = getPaymentProvider();
-            const origin = window.location.origin;
-            const session = await provider.createSession(order, {
-                successUrl: `${origin}/checkout/success?orderId=${encodeURIComponent(order.id)}`,
-                failureUrl: `${origin}/checkout/failure?orderId=${encodeURIComponent(order.id)}`,
+            const session = await createCheckoutSession({
+                productName: 'Motzklist Order',
+                quantity: 1,
+                amount: totalAmountCents,
             });
 
-            // Redirect to payment provider
-            window.location.href = session.redirectUrl;
+            window.location.href = session.url;
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
             setError(message);

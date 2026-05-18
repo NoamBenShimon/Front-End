@@ -180,7 +180,10 @@ function applyCartPricing(data: any) {
         items: Array.isArray(entry.items)
             ? entry.items.map((item: any) => ({
                 ...item,
-                unitPrice: typeof item.unitPrice === 'number' ? item.unitPrice : placeholderUnitPrice,
+                unitPrice:
+                    typeof item.unitPrice === 'number'
+                        ? item.unitPrice
+                        : (typeof item.price === 'number' ? item.price : placeholderUnitPrice),
             }))
             : [],
     }));
@@ -293,5 +296,37 @@ export async function verifyPaymentResult(
         credentials: 'include',
     });
     if (!res.ok) return parseError(res, 'Failed to verify payment');
+    return res.json();
+}
+
+// =============================================================================
+// Checkout API (Stripe session)
+// =============================================================================
+
+type CheckoutSessionRequest = {
+    productName: string;
+    quantity: number;
+    amount: number;
+};
+
+type CheckoutSessionResponse = {
+    url: string;
+};
+
+/**
+ * Creates a Stripe checkout session via the backend.
+ *
+ * @param payload - The checkout session payload (single line item)
+ * @returns Promise resolving to the checkout session URL
+ * @throws {Error} If session creation fails
+ */
+export async function createCheckoutSession(payload: CheckoutSessionRequest): Promise<CheckoutSessionResponse> {
+    const res = await fetch(`${getApiBase()}/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to create checkout session');
     return res.json();
 }
