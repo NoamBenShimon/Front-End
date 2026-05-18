@@ -10,6 +10,7 @@
  */
 
 import { CartEntryPayload } from '@/types/cart';
+import { CreateOrderPayload, Order, PaymentSession, PaymentResult } from '@/types/order';
 
 /**
  * Gets the API base URL.
@@ -127,7 +128,8 @@ export async function getCart(userid: string) {
         credentials: 'include',
     });
     if (!res.ok) return parseError(res, 'Failed to fetch cart');
-    return res.json();
+    const data = await res.json();
+    return applyCartPricing(data);
 }
 
 /**
@@ -150,10 +152,13 @@ export async function updateCart(userid: string, items: CartEntryPayload[]) {
             ...entry.grade,
             id: String(entry.grade.id)
         },
-        items: entry.items.map(item => ({
-            ...item,
-            id: String(item.id)
-        }))
+        items: entry.items.map(item => {
+            const { unitPrice, ...rest } = item;
+            return {
+                ...rest,
+                id: String(item.id)
+            };
+        })
     }));
     const res = await fetch(`${getApiBase()}/api/cart?userid=${encodeURIComponent(userid)}`, {
         method: 'POST',
@@ -163,6 +168,25 @@ export async function updateCart(userid: string, items: CartEntryPayload[]) {
     });
     if (!res.ok) return parseError(res, 'Failed to update cart');
     return res.json();
+}
+
+function applyCartPricing(data: any) {
+    const placeholderUnitPrice = 1; // TODO: Replace with backend-provided per-item prices.
+
+    if (!Array.isArray(data)) return [];
+
+    return data.map((entry: any) => ({
+        ...entry,
+        items: Array.isArray(entry.items)
+            ? entry.items.map((item: any) => ({
+                ...item,
+                unitPrice:
+                    typeof item.unitPrice === 'number'
+                        ? item.unitPrice
+                        : (typeof item.price === 'number' ? item.price : placeholderUnitPrice),
+            }))
+            : [],
+    }));
 }
 
 // =============================================================================
@@ -187,3 +211,122 @@ function parseError(res: Response, fallback: string): Promise<never> {
     });
 }
 
+// =============================================================================
+// Order API
+// =============================================================================
+
+/**
+ * Creates a new order from the user's cart.
+ *
+ * @param payload - The order creation payload with userId and item groups
+ * @returns Promise resolving to the created Order
+ * @throws {Error} If order creation fails
+ */
+export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
+    const res = await fetch(`${getApiBase()}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to create order');
+    return res.json();
+}
+
+/**
+ * Fetches an order by its ID.
+ *
+ * @param orderId - The unique order identifier
+ * @returns Promise resolving to the Order
+ * @throws {Error} If order fetch fails
+ */
+export async function getOrder(orderId: string): Promise<Order> {
+    const res = await fetch(`${getApiBase()}/api/orders/${encodeURIComponent(orderId)}`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to fetch order');
+    return res.json();
+}
+
+// =============================================================================
+// Payment API
+// =============================================================================
+
+/**
+ * Creates a payment session with the backend.
+ * The backend communicates with the configured payment provider
+ * and returns a redirect URL.
+ *
+ * @param orderId - The order to pay for
+ * @param callbackUrls - Success and failure redirect URLs
+ * @returns Promise resolving to a PaymentSession with redirect URL
+ * @throws {Error} If session creation fails
+ */
+export async function createPaymentSession(
+    orderId: string,
+    callbackUrls: { successUrl: string; failureUrl: string }
+): Promise<PaymentSession> {
+    const res = await fetch(`${getApiBase()}/api/payments/session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, ...callbackUrls }),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to create payment session');
+    return res.json();
+}
+
+/**
+ * Verifies a payment result with the backend after provider redirect.
+ *
+ * @param orderId - The order ID
+ * @param transactionId - The provider's transaction ID from the callback URL
+ * @returns Promise resolving to the verified PaymentResult
+ * @throws {Error} If verification fails
+ */
+export async function verifyPaymentResult(
+    orderId: string,
+    transactionId: string
+): Promise<PaymentResult> {
+    const res = await fetch(`${getApiBase()}/api/payments/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, transactionId }),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to verify payment');
+    return res.json();
+}
+
+// =============================================================================
+// Checkout API (Stripe session)
+// =============================================================================
+
+type CheckoutSessionRequest = {
+    productName: string;
+    quantity: number;
+    amount: number;
+};
+
+type CheckoutSessionResponse = {
+    url: string;
+};
+
+/**
+ * Creates a Stripe checkout session via the backend.
+ *
+ * @param payload - The checkout session payload (single line item)
+ * @returns Promise resolving to the checkout session URL
+ * @throws {Error} If session creation fails
+ */
+export async function createCheckoutSession(payload: CheckoutSessionRequest): Promise<CheckoutSessionResponse> {
+    const res = await fetch(`${getApiBase()}/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to create checkout session');
+    return res.json();
+}

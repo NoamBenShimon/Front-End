@@ -27,6 +27,7 @@ import * as api from '@/services/api';
  */
 interface AuthContextType {
     isAuthenticated: boolean;
+    isLoading: boolean;
     userid: string | null;
     username: string | null;
     login: (username: string, password: string) => Promise<void>;
@@ -107,12 +108,8 @@ export function AuthProvider({children}: { children: ReactNode }) {
         clearPersistedAuth();
     };
 
-    if (isLoading) {
-        return null; // Prevent flash of wrong content
-    }
-
     return (
-        <AuthContext.Provider value={{isAuthenticated, userid, username, login, logout}}>
+        <AuthContext.Provider value={{isAuthenticated, isLoading, userid, username, login, logout}}>
             {children}
         </AuthContext.Provider>
     );

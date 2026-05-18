@@ -104,6 +104,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+# Include runtime environment file so Next.js can load it at startup
+COPY --from=builder /app/.env ./.env
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app

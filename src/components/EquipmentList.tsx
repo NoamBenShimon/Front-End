@@ -4,6 +4,7 @@ export interface EquipmentItem {
     id: number;
     name: string;
     quantity: number;
+    unitPrice?: number;
 }
 
 export interface EquipmentData {
@@ -21,7 +22,7 @@ interface EquipmentListProps {
 }
 
 const MIN_QUANTITY = 0;
-const MAX_QUANTITY = 99;
+const formatCurrency = (amount: number) => `${amount.toFixed(2)} ILS`;
 
 export default function EquipmentList({
                                           data,
@@ -39,8 +40,9 @@ export default function EquipmentList({
             <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
                 {/* Header */}
                 <div
-                    className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 font-semibold text-sm text-zinc-700 dark:text-zinc-300">
+                    className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 font-semibold text-sm text-zinc-700 dark:text-zinc-300">
                     <div>Item</div>
+                    <div className="text-right w-28">Price</div>
                     <div className="text-center w-24">Quantity</div>
                     <div className="w-10"></div>
                 </div>
@@ -50,11 +52,13 @@ export default function EquipmentList({
                     {data.items.map((item) => {
                         const isSelected = selectedIds.has(item.id);
                         const currentQuantity = quantities.get(item.id) ?? item.quantity;
+                        const maxQuantity = item.quantity;
+                        // TODO: This max is enforced only in the frontend; backend should validate as well.
 
                         return (
                             <div
                                 key={item.id}
-                                className={`grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 transition-colors ${
+                                className={`grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-3 transition-colors ${
                                     isSelected
                                         ? 'bg-white dark:bg-zinc-900'
                                         : 'bg-zinc-50 dark:bg-zinc-950 opacity-60'
@@ -68,16 +72,21 @@ export default function EquipmentList({
                                     <span>{item.name}</span>
                                 </div>
 
+                                {/* Price */}
+                                <div className="flex items-center justify-end w-28 text-zinc-700 dark:text-zinc-300">
+                                    {formatCurrency(item.unitPrice ?? 1)}
+                                </div>
+
                                 {/* Quantity Input */}
                                 <div className="flex items-center w-24">
                                     <input
                                         type="number"
                                         min={MIN_QUANTITY}
-                                        max={MAX_QUANTITY}
+                                        max={maxQuantity}
                                         value={currentQuantity}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            const clamped = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, val));
+                                            const clamped = Math.max(MIN_QUANTITY, Math.min(maxQuantity, val));
                                             onQuantityChange(item.id, clamped);
                                         }}
                                         disabled={!isSelected}
@@ -120,4 +129,3 @@ export default function EquipmentList({
         </div>
     );
 }
-
