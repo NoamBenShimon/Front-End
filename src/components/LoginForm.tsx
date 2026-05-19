@@ -1,103 +1,145 @@
 'use client';
 
-import {useState, FormEvent} from 'react';
-import {useRouter} from 'next/navigation';
-import {useAuth} from '@/contexts/AuthContext';
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginForm() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    // NEW: Add local error state to show login failures to the user
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPwd, setShowPwd] = useState(false);
 
     const router = useRouter();
-    const {login} = useAuth();
+    const { login } = useAuth();
 
     const isFormValid = username.trim() !== '' && password.trim() !== '';
 
-    // NEW: Make handleSubmit async
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
+        if (!isFormValid) return;
 
-        if (isFormValid) {
-            setIsLoading(true);
-            try {
-                // CRITICAL FIX: Await the login action
-                await login(username, password);
-                // Only redirect if login succeeds (no error thrown)
-                router.push('/');
-            } catch (err: any) {
-                // Show the error message from the backend (e.g., "Invalid password")
-                setError(err.message || 'Failed to login');
-            } finally {
-                setIsLoading(false);
-            }
+        setIsLoading(true);
+        try {
+            await login(username, password);
+            router.push('/');
+        } catch (err: any) {
+            setError(err.message || 'Failed to sign in. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
         <div className="w-full max-w-md mx-auto">
-            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-                    Login
-                </h2>
+            {/* Brand mark */}
+            <div className="flex flex-col items-center mb-8 animate-rise-in">
+                <Link href="/" className="flex items-center gap-3 mb-2">
+                    <span className="crest">M</span>
+                    <span className="flex flex-col leading-none">
+                        <span className="font-display text-[1.55rem] tracking-tight text-(--ink-1)">
+                            Motzkin Store
+                        </span>
+                        <span className="text-[10.5px] uppercase tracking-[0.18em] text-(--ink-3) mt-1">
+                            City of Kiryat Motzkin
+                        </span>
+                    </span>
+                </Link>
+            </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* NEW: Error Alert */}
+            <div className="surface-card p-8 sm:p-10 animate-rise-in delay-1">
+                <header className="mb-7">
+                    <p className="eyebrow mb-2">Parent sign-in</p>
+                    <h1 className="font-display text-[1.95rem] tracking-tight text-(--ink-1) leading-tight mb-2">
+                        Welcome back
+                    </h1>
+                    <p className="text-[0.93rem] text-ink-2">
+                        Sign in to access this year's equipment lists and complete your order.
+                    </p>
+                </header>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
                     {error && (
-                        <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded">
-                            {error}
+                        <div className="flex items-start gap-2.5 px-3.5 py-3 bg-(--bad-50) border border-(--bad-500)/30 rounded text-[13px] text-(--bad-700) animate-rise-in">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-0.5">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+                                <path d="M12 8v5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                                <circle cx="12" cy="16" r="0.8" fill="currentColor" />
+                            </svg>
+                            <span>{error}</span>
                         </div>
                     )}
 
                     <div>
-                        <label
-                            htmlFor="username"
-                            className="block mb-1 text-sm font-bold text-gray-700 dark:text-gray-300"
-                        >
-                            Username
-                        </label>
+                        <label htmlFor="username" className="field-label">Username</label>
                         <input
                             id="username"
                             type="text"
                             value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            onChange={e => setUsername(e.target.value)}
                             disabled={isLoading}
-                            className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white disabled:opacity-50"
-                            placeholder="Enter your username"
+                            className="field-input"
+                            placeholder="e.g. parent.name"
                             autoComplete="username"
+                            autoFocus
                         />
                     </div>
 
                     <div>
-                        <label
-                            htmlFor="password"
-                            className="block mb-1 text-sm font-bold text-gray-700 dark:text-gray-300"
-                        >
-                            Password
-                        </label>
-                        <input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
-                            className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white disabled:opacity-50"
-                            placeholder="Enter your password"
-                            autoComplete="current-password"
-                        />
+                        <label htmlFor="password" className="field-label">Password</label>
+                        <div className="relative">
+                            <input
+                                id="password"
+                                type={showPwd ? 'text' : 'password'}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                disabled={isLoading}
+                                className="field-input pr-20"
+                                placeholder="••••••••"
+                                autoComplete="current-password"
+                            />
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                onClick={() => setShowPwd(s => !s)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-(--ink-3) hover:text-(--ink-1) rounded transition-colors"
+                            >
+                                {showPwd ? 'Hide' : 'Show'}
+                            </button>
+                        </div>
                     </div>
 
                     <button
                         type="submit"
                         disabled={!isFormValid || isLoading}
-                        className="w-full px-4 py-2 mt-6 text-white font-semibold rounded shadow-sm transition-colors duration-200 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed dark:disabled:bg-zinc-700"
+                        className="btn btn-primary w-full mt-2"
                     >
-                        {isLoading ? 'Signing in...' : 'Login'}
+                        {isLoading ? (
+                            <>
+                                <svg className="animate-spin-slow" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="2.5" />
+                                    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                                </svg>
+                                Signing in…
+                            </>
+                        ) : (
+                            'Sign in'
+                        )}
                     </button>
                 </form>
+
+                <div className="divider-soft mt-7 mb-5" />
+
+                <p className="text-[12px] text-(--ink-3) text-center leading-relaxed">
+                    Trouble signing in? Call the municipal service centre at{' '}
+                    <a href="tel:+97248780900" className="text-(--brand-700) hover:underline whitespace-nowrap">
+                        04-878-0900
+                    </a>{' '}
+                    or dial <span className="whitespace-nowrap">*5470</span>.
+                </p>
             </div>
         </div>
     );

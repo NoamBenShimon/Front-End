@@ -1,7 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
@@ -14,10 +13,6 @@ function PaymentSuccessContent() {
     const [cleared, setCleared] = useState(false);
     const hasRun = useRef(false);
 
-    // Only clear the cart when Stripe has actually redirected us here with a
-    // valid checkout session id. Stripe session ids always start with "cs_".
-    // This prevents the cart from being wiped if a user lands on this URL by
-    // mistake (back-button navigation, stale bookmark, refresh, etc.).
     const hasValidSession = typeof sessionId === 'string' && sessionId.startsWith('cs_');
 
     useEffect(() => {
@@ -29,27 +24,39 @@ function PaymentSuccessContent() {
 
     return (
         <Layout>
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="text-center py-16">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+            <div className="max-w-2xl mx-auto px-5 sm:px-8 py-16">
+                <div className="surface-card overflow-hidden animate-rise-in">
+                    <div className="h-1 w-full bg-(--ok-500)" />
+                    <div className="px-8 py-12 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-(--ok-500)/10 mb-6">
+                            <span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-(--ok-500) text-white">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            </span>
+                        </div>
+
+                        <p className="eyebrow mb-3 text-(--ok-700)">Order confirmed</p>
+                        <h1 className="font-display text-[2.1rem] sm:text-[2.4rem] tracking-tight text-(--ink-1) leading-tight mb-3">
+                            Thank you. Your order is on its way.
+                        </h1>
+                        <p className="text-[0.97rem] leading-relaxed text-ink-2 max-w-md mx-auto mb-8">
+                            {hasValidSession
+                                ? cleared
+                                    ? 'Your payment was received and your cart has been cleared. You will receive a confirmation by email shortly.'
+                                    : 'Finalising your order…'
+                                : 'We could not confirm your payment session, but your cart has not been touched. Please contact support if you were charged.'}
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <Link href="/" className="btn btn-primary">
+                                Return home
+                            </Link>
+                            <Link href="/contact" className="btn btn-quiet">
+                                Need help?
+                            </Link>
+                        </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
-                        Payment Successful
-                    </h1>
-                    <p className="text-zinc-500 dark:text-zinc-400 mb-8">
-                        {hasValidSession
-                            ? (cleared ? 'Your cart has been cleared.' : 'Finalizing your order...')
-                            : 'We could not confirm your payment session. Your cart is still intact.'}
-                    </p>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
-                    >
-                        Back to Home
-                    </Link>
                 </div>
             </div>
         </Layout>
@@ -58,21 +65,19 @@ function PaymentSuccessContent() {
 
 export default function PaymentSuccessPage() {
     return (
-        <Suspense fallback={
-            <Layout>
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="text-center py-16">
-                        <svg className="animate-spin h-10 w-10 mx-auto mb-4 text-emerald-600" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        <Suspense
+            fallback={
+                <Layout>
+                    <div className="max-w-2xl mx-auto px-5 sm:px-8 py-20 text-center">
+                        <svg className="animate-spin-slow mx-auto mb-4 text-(--brand-700)" width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
+                            <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                         </svg>
-                        <h2 className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">
-                            Loading...
-                        </h2>
+                        <p className="text-[0.95rem] text-ink-2">Loading…</p>
                     </div>
-                </div>
-            </Layout>
-        }>
+                </Layout>
+            }
+        >
             <PaymentSuccessContent />
         </Suspense>
     );

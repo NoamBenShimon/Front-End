@@ -1,111 +1,398 @@
 @import "tailwindcss";
 
+/* ──────────────────────────────────────────────────────────────────────
+   Motzkin Store · Design Tokens
+   A warm, restrained municipal palette — deep teal of the coast,
+   sand-paper background, clay-warm accents for sums and emphasis.
+   ────────────────────────────────────────────────────────────────────── */
 :root {
-    --background: #fafafa;
-    --foreground: #171717;
+    /* Surfaces — warm paper, never cold white */
+    --surface-page:    #FAF7EE;   /* page background, like good municipal stationery */
+    --surface-card:    #FFFFFF;
+    --surface-sunken:  #F2EDDF;
+    --surface-muted:   #F6F1E3;
+    --surface-band:    #EFE9D8;
+
+    /* Ink */
+    --ink-1: #1B2230;             /* primary text, deep slate (not pure black) */
+    --ink-2: #4A5160;             /* secondary */
+    --ink-3: #7A8294;             /* tertiary, meta */
+    --ink-inverse: #FAF7EE;
+
+    /* Brand — Mediterranean teal */
+    --brand-900: #0B3A48;
+    --brand-700: #14586C;
+    --brand-500: #1F7A92;
+    --brand-200: #BFD8DF;
+    --brand-50:  #E8F0F2;
+
+    /* Accent — sun-baked clay (used for prices, totals, key sums) */
+    --clay-900: #7A3C1E;
+    --clay-700: #B5663A;
+    --clay-500: #C97B3E;
+    --clay-200: #F1D7B8;
+    --clay-50:  #FAEFDF;
+
+    /* Semantic */
+    --ok-700: #2F5D3D;
+    --ok-500: #4C8160;
+    --ok-50:  #E3EDE3;
+    --bad-700: #7E2D26;
+    --bad-500: #A8463C;
+    --bad-50:  #F3DDD7;
+
+    /* Lines & focus */
+    --line:        #E5DECC;
+    --line-strong: #C9C0A6;
+    --focus:       #1F7A92;
+
+    /* Type */
+    --font-display: 'Fraunces', 'Iowan Old Style', 'Hoefler Text', Georgia, 'Times New Roman', serif;
+    --font-body:    'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono:    'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+    /* Shadows — soft, paper-like */
+    --shadow-sm: 0 1px 0 rgba(27, 34, 48, 0.04), 0 1px 2px rgba(27, 34, 48, 0.04);
+    --shadow-md: 0 1px 0 rgba(27, 34, 48, 0.04), 0 6px 18px -8px rgba(27, 34, 48, 0.12);
+    --shadow-lg: 0 2px 0 rgba(27, 34, 48, 0.05), 0 24px 48px -16px rgba(27, 34, 48, 0.18);
 }
 
-/* Tailwind CSS v4 inline theme configuration for custom CSS variables */
 @theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
+    --color-background: var(--surface-page);
+    --color-foreground: var(--ink-1);
+    --color-page: var(--surface-page);
+    --color-card: var(--surface-card);
+    --color-sunken: var(--surface-sunken);
+    --color-band: var(--surface-band);
+    --color-ink: var(--ink-1);
+    --color-ink-2: var(--ink-2);
+    --color-ink-3: var(--ink-3);
+    --color-brand: var(--brand-700);
+    --color-brand-deep: var(--brand-900);
+    --color-brand-soft: var(--brand-50);
+    --color-clay: var(--clay-700);
+    --color-clay-soft: var(--clay-50);
+    --color-ok: var(--ok-500);
+    --color-bad: var(--bad-500);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --font-display: var(--font-display);
+    --font-body: var(--font-body);
+    --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
-}
-
+/* Base ─────────────────────────────────────────────────────────────── */
 html, body {
     height: 100%;
 }
 
+html {
+    color-scheme: light;
+}
+
 body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--surface-page);
+    color: var(--ink-1);
+    font-family: var(--font-body);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-/* Line timer animation - shrinks from full width to zero */
+/* Subtle paper texture — barely perceptible, gives warmth */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        radial-gradient(rgba(27, 34, 48, 0.022) 1px, transparent 1px),
+        radial-gradient(rgba(27, 34, 48, 0.015) 1px, transparent 1px);
+    background-size: 24px 24px, 7px 7px;
+    background-position: 0 0, 3px 3px;
+    opacity: 0.7;
+}
+
+/* Display type — Fraunces with its soft optical sizing */
+.font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-variation-settings: "SOFT" 50, "WONK" 0, "opsz" 96;
+    letter-spacing: -0.02em;
+}
+
+/* Tabular numerals for prices, quantities, totals */
+.nums-tabular,
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* Focus rings — quiet but visible */
+*:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Selection */
+::selection {
+    background: var(--clay-200);
+    color: var(--ink-1);
+}
+
+/* Disable iOS tap highlight */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Scrollbar — subtle */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Reusable surfaces & primitives
+   ────────────────────────────────────────────────────────────────────── */
+
+.surface-card {
+    background: var(--surface-card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: var(--shadow-sm);
+}
+
+.divider-soft {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--line) 12%, var(--line) 88%, transparent);
+}
+
+/* Vertical hair rule used between header brand and tagline */
+.hair-v {
+    width: 1px;
+    background: var(--line-strong);
+    align-self: stretch;
+}
+
+/* Tiny eyebrow label — used above section titles */
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand-700);
+}
+
+/* Municipal crest mark — used in header */
+.crest {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    background: var(--brand-900);
+    color: var(--surface-page);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.04em;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 -8px 16px rgba(0,0,0,0.18);
+}
+
+.crest::after {
+    content: "";
+    position: absolute;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   Buttons
+   ────────────────────────────────────────────────────────────────────── */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.15rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: -0.005em;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+    user-select: none;
+    line-height: 1.2;
+}
+
+.btn:active:not(:disabled) { transform: translateY(0.5px); }
+.btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.btn-primary {
+    background: var(--brand-900);
+    color: var(--surface-page);
+    border-color: var(--brand-900);
+    box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover:not(:disabled) { background: var(--brand-700); border-color: var(--brand-700); }
+
+.btn-clay {
+    background: var(--clay-700);
+    color: #FFF8EF;
+    border-color: var(--clay-700);
+}
+.btn-clay:hover:not(:disabled) { background: var(--clay-900); border-color: var(--clay-900); }
+
+.btn-quiet {
+    background: transparent;
+    color: var(--ink-1);
+    border-color: var(--line-strong);
+}
+.btn-quiet:hover:not(:disabled) { background: var(--surface-sunken); border-color: var(--ink-3); }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border-color: transparent;
+}
+.btn-ghost:hover:not(:disabled) { color: var(--ink-1); background: var(--surface-sunken); }
+
+.btn-danger-quiet {
+    background: transparent;
+    color: var(--bad-500);
+    border-color: transparent;
+}
+.btn-danger-quiet:hover:not(:disabled) { background: var(--bad-50); color: var(--bad-700); }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Form fields
+   ────────────────────────────────────────────────────────────────────── */
+
+.field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 0.4rem;
+}
+
+.field-input {
+    width: 100%;
+    padding: 0.78rem 0.95rem;
+    background: var(--surface-card);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    color: var(--ink-1);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.4;
+    box-shadow: inset 0 1px 0 rgba(27,34,48,0.02);
+    transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.field-input::placeholder { color: var(--ink-3); }
+
+.field-input:hover:not(:disabled) { border-color: var(--ink-3); }
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--brand-700);
+    box-shadow: 0 0 0 3px rgba(31, 122, 146, 0.18);
+}
+
+.field-input:disabled { background: var(--surface-sunken); color: var(--ink-3); cursor: not-allowed; }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Header link underline animation
+   ────────────────────────────────────────────────────────────────────── */
+.nav-link {
+    position: relative;
+    color: var(--ink-2);
+    font-size: 0.93rem;
+    font-weight: 500;
+    transition: color 140ms ease;
+}
+.nav-link:hover { color: var(--ink-1); }
+.nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 1.5px;
+    background: var(--brand-900);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-link:hover::after,
+.nav-link[aria-current="page"]::after { transform: scaleX(1); }
+.nav-link[aria-current="page"] { color: var(--ink-1); }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Animations
+   ────────────────────────────────────────────────────────────────────── */
+
 @keyframes timer-line {
-    from {
-        width: 100%;
-    }
-    to {
-        width: 0;
-    }
+    from { width: 100%; }
+    to   { width: 0; }
 }
+.animate-timer-line { animation: timer-line linear forwards; }
 
-.animate-timer-line {
-    animation: timer-line linear forwards;
-}
-
-/* Toast entrance animation - slides up and fades in */
 @keyframes toast-enter {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    0%   { opacity: 0; transform: translateY(14px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Toast fade-out animation - stays visible then fades away */
 @keyframes toast-fade-out {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    70% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+    0%   { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(8px); }
 }
 
-/* Combined entrance + fade-out animation for toast lifecycle */
 @keyframes toast-lifecycle {
-    /* Entrance phase: 0-8% (roughly 250ms of a 3000ms animation) */
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
+    0%   { opacity: 0; transform: translateY(14px); }
+    8%   { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(8px); }
+}
+
+.animate-toast-lifecycle { animation: toast-lifecycle linear forwards; }
+.animate-toast-enter { animation: toast-enter 220ms ease-out forwards; }
+.animate-toast-enter-fade-out { animation: toast-enter 220ms ease-out forwards, toast-fade-out linear forwards; }
+.animate-toast-fade-out { animation: toast-fade-out linear forwards; }
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes rise-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in  { animation: fade-in 200ms ease-out both; }
+.animate-scale-in { animation: scale-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-rise-in  { animation: rise-in 320ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.delay-1 { animation-delay: 60ms; }
+.delay-2 { animation-delay: 140ms; }
+.delay-3 { animation-delay: 220ms; }
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.animate-spin-slow { animation: spin 900ms linear infinite; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
     }
-    8% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    /* Stay visible */
-    70% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    /* Fade out */
-    100% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
 }
-
-.animate-toast-lifecycle {
-    animation: toast-lifecycle linear forwards;
-}
-
-.animate-toast-enter {
-    animation: toast-enter 250ms ease-out forwards;
-}
-
-.animate-toast-enter-fade-out {
-    animation: toast-enter 250ms ease-out forwards, toast-fade-out linear forwards;
-}
-
-.animate-toast-fade-out {
-    animation: toast-fade-out linear forwards;
-}
-
