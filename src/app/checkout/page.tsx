@@ -13,6 +13,11 @@ export default function CheckoutPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Note: the bfcache/back-forward redirect for this route runs as an
+    // inline pre-hydration script in src/app/layout.tsx, because doing it in
+    // a useEffect here is too late — ProtectedRoute keeps CheckoutPage
+    // unmounted while it shows the auth spinner.
+
     const formatCurrency = (amount: number) => `${amount.toFixed(2)} ILS`;
 
     const totalItems = cartEntries.reduce(

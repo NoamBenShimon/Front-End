@@ -40,6 +40,9 @@ export function AuthProvider({children}: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userid, setUserid] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
+    // `isLoading` is true only until we have *some* answer — either from
+    // localStorage (synchronously, on mount) or from the backend. We never
+    // wait for a slow/hanging /api/auth/status before flipping it to false.
     const [isLoading, setIsLoading] = useState(true);
 
     // Helper: persist to localStorage
@@ -53,31 +56,44 @@ export function AuthProvider({children}: { children: ReactNode }) {
     };
 
     useEffect(() => {
-        // On mount, check auth status from backend or localStorage
+        let cancelled = false;
+
+        // Step 1 (synchronous): seed state from localStorage so the app renders
+        // immediately on cold mount — including the cold mount that happens
+        // when the browser back-button returns the user from Stripe.
+        const storedUserid = localStorage.getItem('userid');
+        const storedUsername = localStorage.getItem('username');
+        const hasStoredAuth = Boolean(storedUserid && storedUsername);
+        if (hasStoredAuth) {
+            setIsAuthenticated(true);
+            setUserid(storedUserid);
+            setUsername(storedUsername);
+        }
+        setIsLoading(false);
+
+        // Step 2 (background): verify with the backend. If the session is
+        // still valid we refresh the stored userid/username. If it isn't and
+        // we had no localStorage credentials either, fall through to logged
+        // out. A slow/hanging /api/auth/status no longer blocks the UI.
         (async () => {
             try {
                 const data = await api.checkAuth();
+                if (cancelled) return;
                 setIsAuthenticated(true);
                 setUserid(data.userid);
                 setUsername(data.username);
                 persistAuth(data.userid, data.username);
-            } catch (err) {
-                // Fallback: try localStorage for session continuity (if backend is stateless)
-                const storedUserid = localStorage.getItem('userid');
-                const storedUsername = localStorage.getItem('username');
-                if (storedUserid && storedUsername) {
-                    setIsAuthenticated(true);
-                    setUserid(storedUserid);
-                    setUsername(storedUsername);
-                } else {
-                    setIsAuthenticated(false);
-                    setUserid(null);
-                    setUsername(null);
-                }
-            } finally {
-                setIsLoading(false);
+            } catch {
+                if (cancelled || hasStoredAuth) return;
+                setIsAuthenticated(false);
+                setUserid(null);
+                setUsername(null);
             }
         })();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const login = async (username: string, password: string) => {
