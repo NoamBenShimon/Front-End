@@ -11,11 +11,11 @@ export default function ContactPage() {
                 <header className="mb-12 max-w-2xl animate-rise-in">
                     <p className="eyebrow mb-3">Get in touch</p>
                     <h1 className="font-display text-[2.6rem] sm:text-[3rem] leading-[1.05] tracking-tight text-(--ink-1) mb-4">
-                        We're here to help.
+                        We&#39;re here to help.
                     </h1>
                     <p className="text-[1.05rem] leading-relaxed text-ink-2">
                         For questions about school equipment orders, payments, or
-                        technical issues, reach out to the municipality's service centre
+                        technical issues, reach out to the municipality&#39;s service centre
                         or to the developer team.
                     </p>
                 </header>

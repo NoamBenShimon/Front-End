@@ -23,6 +23,7 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from 'react';
 import * as api from '@/services/api';
+import type { CartApiEntry, CartApiItem } from '@/services/api';
 import { CartEntryPayload, CartItem } from '@/types/cart';
 import { useAuth } from './AuthContext';
 
@@ -62,6 +63,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const normalizeEntry = (entry: CartApiEntry, index: number): CartEntry => {
+        const school = entry.school ?? { id: 0, name: 'Unknown school' };
+        const grade = entry.grade ?? { id: 0, name: 'Unknown grade' };
+        const items = Array.isArray(entry.items) ? entry.items : [];
+
+        return {
+            id: typeof entry.id === 'string' && entry.id.trim() !== '' ? entry.id : `${Date.now()}-${index}`,
+            timestamp: typeof entry.timestamp === 'number' ? entry.timestamp : Date.now(),
+            school: {
+                id: Number(school.id),
+                name: school.name ?? 'Unknown school',
+            },
+            grade: {
+                id: Number(grade.id),
+                name: grade.name ?? 'Unknown grade',
+            },
+            items: items.map((item: CartApiItem) => ({
+                id: Number(item.id),
+                name: item.name ?? 'Unknown item',
+                quantity: typeof item.quantity === 'number' ? item.quantity : 0,
+                unitPrice: typeof item.unitPrice === 'number' ? item.unitPrice : undefined,
+            })),
+        };
+    };
+
     // Serialize all cart mutations so concurrent add/remove/clear calls never
     // overlap and overwrite each other (e.g. two rapid "Save to Cart" clicks
     // both reading the same server snapshot and racing on the write).
@@ -84,30 +110,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setError(null);
         try {
             const data = await api.getCart(userid);
-            // Normalize all ids to number for CartEntry and CartItem
-            const normalized = Array.isArray(data)
-                ? data.map((entry: any) => ({
-                    ...entry,
-                    school: {
-                        ...entry.school,
-                        id: Number(entry.school.id),
-                    },
-                    grade: {
-                        ...entry.grade,
-                        id: Number(entry.grade.id),
-                    },
-                    items: Array.isArray(entry.items)
-                        ? entry.items.map((item: any) => ({
-                            ...item,
-                            id: Number(item.id),
-                        }))
-                        : [],
-                }))
+            const normalized: CartEntry[] = Array.isArray(data)
+                ? data.map((entry: CartApiEntry, index: number) => normalizeEntry(entry, index))
                 : [];
             setCartEntries(normalized);
             console.log('[CartContext] fetchCart: setCartEntries', normalized);
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch cart');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : '';
+            setError(message || 'Failed to fetch cart');
             setCartEntries([]);
             console.log('[CartContext] fetchCart: setCartEntries([]) after error');
         } finally {
@@ -116,7 +126,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, [userid]);
 
     useEffect(() => {
-        fetchCart();
+        const timeoutId = setTimeout(() => {
+            void fetchCart();
+        }, 0);
+        return () => {
+            clearTimeout(timeoutId);
+        };
     }, [fetchCart, isAuthenticated]);
 
     const addToCart = useCallback(async (entry: CartEntryPayload) => {
@@ -147,8 +162,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 setCartEntries(next); // Optimistic update.
                 await api.updateCart(userid, next);
                 await fetchCart(); // Reconcile with backend (gets real ids/prices).
-            } catch (err: any) {
-                setError(err.message || 'Failed to add to cart');
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : '';
+                setError(message || 'Failed to add to cart');
                 await fetchCart(); // Roll back to authoritative server state.
             }
         });
@@ -164,8 +180,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 setCartEntries(next);
                 await api.updateCart(userid, next);
                 await fetchCart();
-            } catch (err: any) {
-                setError(err.message || 'Failed to remove from cart');
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : '';
+                setError(message || 'Failed to remove from cart');
                 await fetchCart();
             }
         });
@@ -179,8 +196,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
             try {
                 await api.updateCart(userid, []);
                 await fetchCart();
-            } catch (err: any) {
-                setError(err.message || 'Failed to clear cart');
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : '';
+                setError(message || 'Failed to clear cart');
                 await fetchCart();
             }
         });

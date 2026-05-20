@@ -21,6 +21,33 @@ interface EquipmentItemResponse {
     unitPrice?: number;
 }
 
+type RawEquipmentItem = Omit<EquipmentItemResponse, 'id'> & {
+    id: number | string;
+    price?: number;
+};
+
+interface RawEquipmentResponse {
+    items?: RawEquipmentItem[];
+    [key: string]: unknown;
+}
+
+const isRawEquipmentResponse = (value: unknown): value is RawEquipmentResponse => {
+    if (!value || typeof value !== 'object') return false;
+    return Array.isArray((value as { items?: unknown }).items);
+};
+
+const normalizeEquipmentItems = (items: RawEquipmentItem[]): EquipmentItemResponse[] =>
+    items.map(item => ({
+        ...item,
+        id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
+        unitPrice:
+            typeof item.unitPrice === 'number'
+                ? item.unitPrice
+                : typeof item.price === 'number'
+                    ? item.price
+                    : item.unitPrice,
+    }));
+
 export default function Home() {
     const { isAuthenticated } = useAuth();
 
@@ -34,13 +61,13 @@ export default function Home() {
     const [isLoading, setIsLoading] = useState(false);
 
     const fetchData = useCallback(
-        async (
+        async <T,>(
             endpoint: string,
-            setter: (data: SelectItem[] | EquipmentItemResponse[] | any) => void,
+            setter: (data: T) => void,
             resetSelections: boolean = true
         ) => {
             if (resetSelections) {
-                setter([]);
+                setter([] as T);
                 setEquipmentData(null);
             }
 
@@ -49,22 +76,15 @@ export default function Home() {
                 const url = `${API_BASE_URL}${endpoint}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Failed to fetch ${endpoint}. Status: ${response.status}`);
-                const data = await response.json();
-                if (endpoint.startsWith('/api/equipment')) {
-                    if (data.items) {
-                        data.items = data.items.map((item: any) => ({
-                            ...item,
-                            id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
-                            unitPrice:
-                                typeof item.unitPrice === 'number'
-                                    ? item.unitPrice
-                                    : typeof item.price === 'number'
-                                        ? item.price
-                                        : item.unitPrice,
-                        }));
-                    }
+                const data = (await response.json()) as unknown;
+                let payload: unknown = data;
+                if (endpoint.startsWith('/api/equipment') && isRawEquipmentResponse(data)) {
+                    payload = {
+                        ...data,
+                        items: data.items ? normalizeEquipmentItems(data.items) : [],
+                    };
                 }
-                setter(data);
+                setter(payload as T);
             } catch (error) {
                 console.error(`Error fetching ${endpoint}:`, error);
             } finally {
@@ -158,7 +178,7 @@ export default function Home() {
                     <header className="text-center mb-10 animate-rise-in">
                         <p className="eyebrow mb-3">School supplies</p>
                         <h1 className="font-display text-[2.6rem] sm:text-[3.2rem] leading-[1.05] tracking-tight text-(--ink-1) mb-4">
-                            Order your child's
+                            Order your child&#39;s
                             <br />
                             <span className="text-(--brand-900) italic" style={{ fontVariationSettings: '"WONK" 1' }}>
                                 school list
@@ -166,7 +186,7 @@ export default function Home() {
                             <span className="text-(--ink-1)">, in one go.</span>
                         </h1>
                         <p className="text-[1.05rem] leading-relaxed text-ink-2 max-w-xl mx-auto">
-                            Pick your school and your child's grade to see the equipment list,
+                            Pick your school and your child&#39;s grade to see the equipment list,
                             then check out in one payment.
                         </p>
                     </header>

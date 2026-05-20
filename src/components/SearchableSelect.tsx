@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 export interface SelectItem {
     id: string | number;
     name: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 interface SearchableSelectProps {

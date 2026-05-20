@@ -12,6 +12,24 @@
 import { CartEntryPayload } from '@/types/cart';
 import { CreateOrderPayload, Order, PaymentSession, PaymentResult } from '@/types/order';
 
+export type CartApiItem = {
+    id: number | string;
+    name?: string;
+    quantity?: number;
+    unitPrice?: number;
+    price?: number;
+    [key: string]: unknown;
+};
+
+export type CartApiEntry = {
+    id?: string;
+    timestamp?: number;
+    school?: { id: number | string; name: string };
+    grade?: { id: number | string; name: string };
+    items?: CartApiItem[];
+    [key: string]: unknown;
+};
+
 /**
  * Gets the API base URL.
  * Uses a getter to avoid issues during SSR/module evaluation.
@@ -122,7 +140,7 @@ export async function checkAuth() {
  * @returns Promise resolving to the user's cart data
  * @throws {Error} If cart fetch fails
  */
-export async function getCart(userid: string) {
+export async function getCart(userid: string): Promise<CartApiEntry[]> {
     const res = await fetch(`${getApiBase()}/api/cart?userid=${encodeURIComponent(userid)}`, {
         method: 'GET',
         credentials: 'include',
@@ -170,23 +188,25 @@ export async function updateCart(userid: string, items: CartEntryPayload[]) {
     return res.json();
 }
 
-function applyCartPricing(data: any) {
+function applyCartPricing(data: unknown): CartApiEntry[] {
     const placeholderUnitPrice = 1; // TODO: Replace with backend-provided per-item prices.
 
     if (!Array.isArray(data)) return [];
 
-    return data.map((entry: any) => ({
-        ...entry,
-        items: Array.isArray(entry.items)
-            ? entry.items.map((item: any) => ({
+    return data.map(entry => {
+        const safeEntry = entry as CartApiEntry;
+        const items = Array.isArray(safeEntry.items) ? safeEntry.items : [];
+        return {
+            ...safeEntry,
+            items: items.map(item => ({
                 ...item,
                 unitPrice:
                     typeof item.unitPrice === 'number'
                         ? item.unitPrice
                         : (typeof item.price === 'number' ? item.price : placeholderUnitPrice),
-            }))
-            : [],
-    }));
+            })),
+        };
+    });
 }
 
 // =============================================================================

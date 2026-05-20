@@ -26,7 +26,7 @@ function PaymentCancelContent() {
                         </h1>
                         <p className="text-[0.97rem] leading-relaxed text-ink-2 max-w-md mx-auto mb-8">
                             We did not charge your card. Your saved equipment lists are still
-                            in your cart whenever you're ready to try again.
+                            in your cart whenever you&#39;re ready to try again.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">

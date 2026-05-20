@@ -26,8 +26,9 @@ export default function LoginForm() {
         try {
             await login(username, password);
             router.push('/');
-        } catch (err: any) {
-            setError(err.message || 'Failed to sign in. Please try again.');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : '';
+            setError(message || 'Failed to login. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -54,10 +55,10 @@ export default function LoginForm() {
                 <header className="mb-7">
                     <p className="eyebrow mb-2">Parent sign-in</p>
                     <h1 className="font-display text-[1.95rem] tracking-tight text-(--ink-1) leading-tight mb-2">
-                        Welcome back
+                        Login
                     </h1>
                     <p className="text-[0.93rem] text-ink-2">
-                        Sign in to access this year's equipment lists and complete your order.
+                        Sign in to access this year&#39;s equipment lists and complete your order.
                     </p>
                 </header>
 
@@ -126,7 +127,7 @@ export default function LoginForm() {
                                 Signing in…
                             </>
                         ) : (
-                            'Sign in'
+                            'Login'
                         )}
                     </button>
                 </form>

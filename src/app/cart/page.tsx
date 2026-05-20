@@ -101,7 +101,7 @@ export default function CartPage() {
                         </div>
                         <h2 className="font-display text-[1.4rem] text-(--ink-1) mb-1.5">Your cart is empty</h2>
                         <p className="text-[0.93rem] text-ink-2 mb-6 max-w-sm mx-auto">
-                            Once you save a school's equipment list, it will appear here ready
+                            Once you save a school&#39;s equipment list, it will appear here ready
                             for checkout.
                         </p>
                         <Link href="/" className="btn btn-primary">
@@ -191,7 +191,7 @@ export default function CartPage() {
                         <div className="mt-10 pt-8 border-t border-(--line)">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                 <p className="text-[14px] text-ink-2">
-                                    Ready to complete your order? You'll be redirected to a secure
+                                    Ready to complete your order? You&#39;ll be redirected to a secure
                                     payment page.
                                 </p>
                                 <div className="text-right">
