@@ -30,15 +30,18 @@ export default function SearchableSelect({
     const [query, setQuery] = useState('');
     const [selectedItem, setSelectedItem] = useState<SelectItem | null>(null);
     const [isOpen, setIsOpen] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    // Reset whenever the source list changes (e.g. parent reloaded options)
-    useEffect(() => {
+    // Reset state when the source list changes by storing the previous items
+    // reference and comparing during render — the React-recommended pattern
+    // ("Adjusting state while rendering") that avoids a setState-in-effect.
+    const [prevItems, setPrevItems] = useState(items);
+    if (items !== prevItems) {
+        setPrevItems(items);
         setQuery('');
         setSelectedItem(null);
         setIsOpen(false);
-    }, [items]);
+    }
+    const inputRef = useRef<HTMLInputElement>(null);
+    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         return () => {
@@ -171,7 +174,7 @@ export default function SearchableSelect({
                 >
                     {hasNoMatches ? (
                         <p className="px-4 py-3 text-sm text-(--ink-3) italic">
-                            No matches for "{query}"
+                            No matches for &quot;{query}&quot;
                         </p>
                     ) : (
                         <ul

@@ -48,6 +48,27 @@ const normalizeEquipmentItems = (items: RawEquipmentItem[]): EquipmentItemRespon
                     : item.unitPrice,
     }));
 
+// Bail-out helpers so the equipment-init effect below can short-circuit when
+// the derived state already matches — required to satisfy the
+// react-hooks/set-state-in-effect lint rule.
+const areNumberSetsEqual = (a: Set<number>, b: Set<number>): boolean => {
+    if (a === b) return true;
+    if (a.size !== b.size) return false;
+    for (const value of a) {
+        if (!b.has(value)) return false;
+    }
+    return true;
+};
+
+const areNumberMapsEqual = (a: Map<number, number>, b: Map<number, number>): boolean => {
+    if (a === b) return true;
+    if (a.size !== b.size) return false;
+    for (const [key, value] of a) {
+        if (b.get(key) !== value) return false;
+    }
+    return true;
+};
+
 export default function Home() {
     const { isAuthenticated } = useAuth();
 
@@ -96,17 +117,27 @@ export default function Home() {
 
     useEffect(() => {
         if (!isAuthenticated) return;
+        // External fetch on mount/auth-change — the lint rule can't tell that
+        // the setSchools call happens after an `await` inside fetchData rather
+        // than synchronously in this effect body.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData('/api/schools', setSchools, false);
     }, [fetchData, isAuthenticated]);
 
-    useEffect(() => {
+    // Reset selection/quantity state when the equipment list changes by
+    // comparing the previous reference during render — the React-recommended
+    // "Adjusting state while rendering" pattern, which avoids a
+    // setState-in-effect lint violation.
+    const [prevEquipmentData, setPrevEquipmentData] = useState<EquipmentData | null>(equipmentData);
+    if (equipmentData !== prevEquipmentData) {
+        setPrevEquipmentData(equipmentData);
         if (equipmentData) {
             const allIds = new Set(equipmentData.items.map(item => item.id));
-            setSelectedEquipment(allIds);
             const initialQuantities = new Map(equipmentData.items.map(item => [item.id, item.quantity]));
-            setQuantities(initialQuantities);
+            setSelectedEquipment(prev => (areNumberSetsEqual(prev, allIds) ? prev : allIds));
+            setQuantities(prev => (areNumberMapsEqual(prev, initialQuantities) ? prev : initialQuantities));
         }
-    }, [equipmentData]);
+    }
 
     const handleSchoolSelect = useCallback(
         (item: SelectItem) => {
