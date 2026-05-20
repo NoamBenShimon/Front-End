@@ -21,7 +21,7 @@ interface SearchableSelectProps {
 export default function SearchableSelect({
     label,
     items,
-    placeholder = 'Search…',
+    placeholder = 'Search...',
     onSelect,
     onClear,
     disabled = false,
@@ -29,21 +29,36 @@ export default function SearchableSelect({
 }: SearchableSelectProps) {
     const [query, setQuery] = useState('');
     const [selectedItem, setSelectedItem] = useState<SelectItem | null>(null);
+    const [isOpen, setIsOpen] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Reset whenever the source list changes (e.g. parent reloaded options)
     useEffect(() => {
         setQuery('');
         setSelectedItem(null);
+        setIsOpen(false);
     }, [items]);
+
+    useEffect(() => {
+        return () => {
+            if (blurTimeoutRef.current) {
+                clearTimeout(blurTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const filteredItems = selectedItem
         ? items
         : items.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
 
     const handleSelect = (item: SelectItem) => {
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+        }
         setSelectedItem(item);
         setQuery(item.name);
+        setIsOpen(false);
         onSelect(item);
         inputRef.current?.blur();
     };
@@ -51,12 +66,29 @@ export default function SearchableSelect({
     const handleClear = () => {
         setSelectedItem(null);
         setQuery('');
+        setIsOpen(true);
         onClear?.();
         // Re-focus so keyboard users can immediately search again
         requestAnimationFrame(() => inputRef.current?.focus());
     };
 
-    const showList = !selectedItem && !disabled && items.length > 0;
+    const handleFocus = () => {
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+        }
+        setIsOpen(true);
+    };
+
+    const handleBlur = () => {
+        if (blurTimeoutRef.current) {
+            clearTimeout(blurTimeoutRef.current);
+        }
+        blurTimeoutRef.current = setTimeout(() => {
+            setIsOpen(false);
+        }, 200);
+    };
+
+    const showList = isOpen && !selectedItem && !disabled && items.length > 0;
     const hasNoMatches = showList && filteredItems.length === 0;
 
     return (
@@ -85,6 +117,8 @@ export default function SearchableSelect({
                     placeholder={placeholder}
                     value={query}
                     onChange={e => setQuery(e.target.value)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
                     autoComplete="off"
                     aria-expanded={showList}
                     aria-controls={showList ? `${label}-options` : undefined}
@@ -150,7 +184,10 @@ export default function SearchableSelect({
                                     key={item.id}
                                     role="option"
                                     aria-selected={false}
-                                    onClick={() => handleSelect(item)}
+                                    onMouseDown={e => {
+                                        e.preventDefault();
+                                        handleSelect(item);
+                                    }}
                                     className="group relative px-4 py-3 text-[0.95rem] text-(--ink-2) cursor-pointer hover:text-(--ink-1) hover:bg-(--surface-page)/60 transition-colors"
                                 >
                                     {/* Left accent bar — slides in on hover */}
