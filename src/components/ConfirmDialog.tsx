@@ -23,20 +23,18 @@ export default function ConfirmDialog({
     onCancel,
     variant = 'default',
 }: ConfirmDialogProps) {
-    // Close on escape key
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-            onCancel();
-        }
-    }, [onCancel]);
+    const handleKeyDown = useCallback(
+        (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onCancel();
+        },
+        [onCancel]
+    );
 
     useEffect(() => {
         if (isOpen) {
             document.addEventListener('keydown', handleKeyDown);
-            // Prevent body scroll when modal is open
             document.body.style.overflow = 'hidden';
         }
-
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
@@ -45,43 +43,50 @@ export default function ConfirmDialog({
 
     if (!isOpen) return null;
 
-    const confirmButtonClass = variant === 'danger'
-        ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white'
-        : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white';
+    const isDanger = variant === 'danger';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-(--ink-1)/45 backdrop-blur-[2px] animate-fade-in"
                 onClick={onCancel}
+                aria-hidden="true"
             />
 
-            {/* Dialog */}
-            <div className="relative bg-white dark:bg-zinc-900 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
-                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
-                    {title}
-                </h2>
-                <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-                    {message}
-                </p>
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="confirm-title"
+                className="relative w-full max-w-md bg-card border border-line rounded shadow-(--shadow-lg) animate-scale-in overflow-hidden"
+            >
+                {/* Accent stripe */}
+                <div className={`h-1 w-full ${isDanger ? 'bg-(--bad-500)' : 'bg-(--brand-900)'}`} />
 
-                <div className="flex justify-end gap-3">
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2 rounded-lg font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                <div className="px-6 pt-5 pb-6">
+                    <h2
+                        id="confirm-title"
+                        className="font-display text-[1.35rem] tracking-tight text-(--ink-1) mb-1.5"
                     >
-                        {cancelLabel}
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${confirmButtonClass}`}
-                    >
-                        {confirmLabel}
-                    </button>
+                        {title}
+                    </h2>
+                    <p className="text-[0.93rem] leading-relaxed text-ink-2">
+                        {message}
+                    </p>
+
+                    <div className="mt-6 flex justify-end gap-2.5">
+                        <button onClick={onCancel} className="btn btn-quiet">
+                            {cancelLabel}
+                        </button>
+                        <button
+                            onClick={onConfirm}
+                            className={`btn ${isDanger ? 'btn-clay' : 'btn-primary'}`}
+                            style={isDanger ? { background: 'var(--bad-500)', borderColor: 'var(--bad-500)' } : undefined}
+                        >
+                            {confirmLabel}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
-

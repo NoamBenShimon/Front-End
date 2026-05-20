@@ -14,7 +14,7 @@ interface SaveToCartButtonProps {
     disabled?: boolean;
 }
 
-const DISABLED_DURATION = 3000; // 3 seconds
+const DISABLED_DURATION = 3000;
 
 export default function SaveToCartButton({
     school,
@@ -31,11 +31,10 @@ export default function SaveToCartButton({
     const handleSaveToCart = useCallback(() => {
         if (!school || !grade) return;
 
-        // Filter only selected items and map with current quantities
         const cartItems: CartEntryPayload['items'] = items
             .filter(item => selectedIds.has(item.id))
             .map(item => ({
-                id: Number(item.id), // Ensure id is number
+                id: Number(item.id),
                 name: item.name,
                 quantity: quantities.get(item.id) ?? item.quantity,
                 unitPrice: item.unitPrice,
@@ -50,22 +49,16 @@ export default function SaveToCartButton({
             items: cartItems,
         });
 
-        // Show toast and disable button temporarily
         setShowToast(true);
         setIsTemporarilyDisabled(true);
-
-        setTimeout(() => {
-            setIsTemporarilyDisabled(false);
-        }, DISABLED_DURATION);
+        setTimeout(() => setIsTemporarilyDisabled(false), DISABLED_DURATION);
     }, [school, grade, selectedIds, quantities, items, addToCart]);
 
-    const handleCloseToast = useCallback(() => {
-        setShowToast(false);
-    }, []);
+    const handleCloseToast = useCallback(() => setShowToast(false), []);
 
-    const isButtonDisabled = disabled || isTemporarilyDisabled || !school || !grade || selectedIds.size === 0;
+    const isButtonDisabled =
+        disabled || isTemporarilyDisabled || !school || !grade || selectedIds.size === 0;
 
-    // Count selected items with quantity > 0
     const validItemCount = items
         .filter(item => selectedIds.has(item.id))
         .filter(item => (quantities.get(item.id) ?? item.quantity) > 0)
@@ -77,23 +70,31 @@ export default function SaveToCartButton({
                 <button
                     onClick={handleSaveToCart}
                     disabled={isButtonDisabled}
-                    className={`relative w-full py-3 px-6 rounded-lg font-semibold text-white transition-all overflow-hidden ${
-                        isButtonDisabled
-                            ? 'bg-blue-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-                    }`}
+                    className="relative w-full btn btn-primary !py-4 !text-[1rem] overflow-hidden"
                 >
-                    <span className="relative z-10">
-                        {isTemporarilyDisabled
-                            ? 'Saved!'
-                            : `Save to Cart${validItemCount > 0 ? ` (${validItemCount} items)` : ''}`
-                        }
+                    <span className="relative z-10 inline-flex items-center gap-2.5">
+                        {isTemporarilyDisabled ? (
+                            <>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                Saved to cart
+                            </>
+                        ) : (
+                            <>
+                                Save list to cart
+                                {validItemCount > 0 && (
+                                    <span className="tabular-nums opacity-70 font-normal">
+                                        · {validItemCount} {validItemCount === 1 ? 'item' : 'items'}
+                                    </span>
+                                )}
+                            </>
+                        )}
                     </span>
 
-                    {/* Line timer on bottom edge - darker shade of blue */}
                     {isTemporarilyDisabled && (
                         <div
-                            className="absolute bottom-0 left-0 h-1 bg-blue-800 animate-timer-line"
+                            className="absolute bottom-0 left-0 h-[2px] bg-(--clay-500) animate-timer-line"
                             style={{ animationDuration: `${DISABLED_DURATION}ms` }}
                         />
                     )}
@@ -101,7 +102,7 @@ export default function SaveToCartButton({
             </div>
 
             <Toast
-                message="List saved to cart!"
+                message="List saved to cart"
                 isVisible={showToast}
                 onClose={handleCloseToast}
                 duration={DISABLED_DURATION}
