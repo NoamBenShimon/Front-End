@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AuthenticatedProviders from "@/components/AuthenticatedProviders";
@@ -24,11 +26,13 @@ const geistMono = Geist_Mono({
     variable: "--font-mono-loaded",
 });
 
-export const metadata: Metadata = {
-    title: "Motzkin Store · School Equipment",
-    description:
-        "Order the school supply list for your child in Kiryat Motzkin.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const t = await getTranslations("Metadata");
+    return {
+        title: t("title"),
+        description: t("description"),
+    };
+}
 
 // Pre-hydration guard for the Stripe back-button hang.
 //
@@ -61,26 +65,32 @@ const BACK_NAV_REDIRECT_SCRIPT = `
 })();
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const locale = await getLocale();
+    const messages = await getMessages();
+    const dir = locale === "he" ? "rtl" : "ltr";
+
     return (
         <html
-            lang="en"
-            dir="ltr"
+            lang={locale}
+            dir={dir}
             className={`${fraunces.variable} ${geist.variable} ${geistMono.variable}`}
         >
             <head>
                 <script dangerouslySetInnerHTML={{ __html: BACK_NAV_REDIRECT_SCRIPT }} />
             </head>
             <body className="antialiased" suppressHydrationWarning>
-                <AuthProvider>
-                    <AuthenticatedProviders>
-                        <ProtectedRoute>{children}</ProtectedRoute>
-                    </AuthenticatedProviders>
-                </AuthProvider>
+                <NextIntlClientProvider locale={locale} messages={messages}>
+                    <AuthProvider>
+                        <AuthenticatedProviders>
+                            <ProtectedRoute>{children}</ProtectedRoute>
+                        </AuthenticatedProviders>
+                    </AuthProvider>
+                </NextIntlClientProvider>
             </body>
         </html>
     );

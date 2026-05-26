@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import Layout from '@/components/Layout';
 
 interface TeamMember {
@@ -20,6 +21,7 @@ const teamMembers: TeamMember[] = [
 ];
 
 export default function AboutPage() {
+    const t = useTranslations('About');
     const mentors = teamMembers.filter(m => m.role === 'Mentor');
     const members = teamMembers.filter(m => m.role === 'Team Member');
 
@@ -28,14 +30,12 @@ export default function AboutPage() {
             <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
                 {/* Hero */}
                 <header className="mb-14 max-w-2xl animate-rise-in">
-                    <p className="eyebrow mb-3">About</p>
+                    <p className="eyebrow mb-3">{t('eyebrow')}</p>
                     <h1 className="font-display text-[2.6rem] sm:text-[3rem] leading-[1.05] tracking-tight text-(--ink-1) mb-5">
-                        About Motzkin Store
+                        {t('title')}
                     </h1>
                     <p className="text-[1.05rem] leading-relaxed text-ink-2">
-                        Motzkin Store is a school-supply ordering site for families in
-                        Kiryat Motzkin. Pick the school, pick the grade, and order the
-                        equipment list in one go.
+                        {t('intro')}
                     </p>
                 </header>
 
@@ -43,25 +43,24 @@ export default function AboutPage() {
                 <section>
                     <div className="flex items-end justify-between mb-7 flex-wrap gap-3">
                         <div>
-                            <p className="eyebrow mb-2">The team</p>
+                            <p className="eyebrow mb-2">{t('teamEyebrow')}</p>
                             <h2 className="font-display text-[2rem] tracking-tight text-(--ink-1) leading-tight">
-                                Built by students of the Technion
+                                {t('teamHeading')}
                             </h2>
                         </div>
                         <p className="text-[13px] text-ink-2 max-w-xs">
-                            Developed as part of the Project in Software Engineering course,
-                            in cooperation with the Kiryat Motzkin Municipality.
+                            {t('teamDescription')}
                         </p>
                     </div>
 
                     {mentors.length > 0 && (
                         <div className="mb-10">
                             <h3 className="text-[11px] uppercase tracking-[0.18em] font-semibold text-(--ink-3) mb-4">
-                                Mentor
+                                {t('roleMentor')}
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                                 {mentors.map((m, i) => (
-                                    <MemberCard key={m.login} member={m} delay={i} mentor />
+                                    <MemberCard key={m.login} member={m} delay={i} mentor mentorLabel={t('roleMentor')} />
                                 ))}
                             </div>
                         </div>
@@ -69,11 +68,11 @@ export default function AboutPage() {
 
                     <div>
                         <h3 className="text-[11px] uppercase tracking-[0.18em] font-semibold text-(--ink-3) mb-4">
-                            Team members
+                            {t('teamMembersHeading')}
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                             {members.map((m, i) => (
-                                <MemberCard key={m.login} member={m} delay={i + mentors.length} />
+                                <MemberCard key={m.login} member={m} delay={i + mentors.length} mentorLabel={t('roleMentor')} />
                             ))}
                         </div>
                     </div>
@@ -87,10 +86,12 @@ function MemberCard({
     member,
     delay,
     mentor = false,
+    mentorLabel,
 }: {
     member: TeamMember;
     delay: number;
     mentor?: boolean;
+    mentorLabel: string;
 }) {
     return (
         <a
@@ -115,7 +116,7 @@ function MemberCard({
                     <p className="text-[12px] text-(--ink-3) truncate mt-0.5">@{member.login}</p>
                     {mentor && (
                         <p className="mt-2 inline-block text-[10px] uppercase tracking-[0.16em] font-semibold text-(--clay-900) bg-(--clay-50) px-1.5 py-0.5 rounded-sm">
-                            Mentor
+                            {mentorLabel}
                         </p>
                     )}
                 </div>

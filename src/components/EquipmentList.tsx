@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 export interface EquipmentItem {
     id: number;
     name: string;
@@ -22,7 +24,6 @@ interface EquipmentListProps {
 }
 
 const MIN_QUANTITY = 0;
-const formatCurrency = (amount: number) => `${amount.toFixed(2)} ILS`;
 
 export default function EquipmentList({
     data,
@@ -31,7 +32,10 @@ export default function EquipmentList({
     onToggle,
     onQuantityChange,
 }: EquipmentListProps) {
-    // Subtotal for currently selected items
+    const t = useTranslations('EquipmentList');
+    const tCommon = useTranslations('Common');
+    const formatCurrency = (amount: number) => tCommon('currencyILS', { amount: amount.toFixed(2) });
+
     const subtotal = data.items.reduce((sum, item) => {
         if (!selectedIds.has(item.id)) return sum;
         const qty = quantities.get(item.id) ?? item.quantity;
@@ -44,26 +48,24 @@ export default function EquipmentList({
         <section className="mt-8 animate-rise-in">
             <header className="flex items-end justify-between mb-3 gap-4">
                 <div>
-                    <p className="eyebrow mb-1">Equipment list</p>
+                    <p className="eyebrow mb-1">{t('eyebrow')}</p>
                     <h3 className="font-display text-[1.55rem] tracking-tight text-(--ink-1) leading-tight">
                         {data.className}
                     </h3>
                 </div>
                 <p className="text-[12.5px] text-ink-3 tabular-nums whitespace-nowrap">
-                    {selectedCount} of {data.items.length} selected
+                    {t('selectedSummary', { selected: selectedCount, total: data.items.length })}
                 </p>
             </header>
 
             <div className="surface-card overflow-hidden">
-                {/* Header row */}
                 <div className="grid grid-cols-[auto_1fr_auto_auto] gap-x-4 px-5 py-3 bg-sunken border-b border-line">
                     <span className="w-5" aria-hidden="true" />
-                    <span className="eyebrow !text-(--ink-3)">Item</span>
-                    <span className="eyebrow !text-(--ink-3) text-right w-28">Price</span>
-                    <span className="eyebrow !text-(--ink-3) text-center w-24">Qty</span>
+                    <span className="eyebrow !text-(--ink-3)">{t('headerItem')}</span>
+                    <span className="eyebrow !text-(--ink-3) text-right w-28">{t('headerPrice')}</span>
+                    <span className="eyebrow !text-(--ink-3) text-center w-24">{t('headerQuantity')}</span>
                 </div>
 
-                {/* Items */}
                 <ul className="divide-y divide-(--line)">
                     {data.items.map(item => {
                         const isSelected = selectedIds.has(item.id);
@@ -77,12 +79,15 @@ export default function EquipmentList({
                                     isSelected ? 'bg-(--surface-card)' : 'bg-(--surface-muted)'
                                 }`}
                             >
-                                {/* Checkbox */}
                                 <button
                                     type="button"
                                     onClick={() => onToggle(item.id)}
                                     aria-pressed={isSelected}
-                                    aria-label={`${isSelected ? 'Deselect' : 'Select'} ${item.name}`}
+                                    aria-label={
+                                        isSelected
+                                            ? t('deselectAria', { name: item.name })
+                                            : t('selectAria', { name: item.name })
+                                    }
                                     className={`w-5 h-5 rounded-[3px] border flex items-center justify-center transition-all flex-shrink-0 self-center ${
                                         isSelected
                                             ? 'bg-(--brand-900) border-(--brand-900) text-(--surface-page)'
@@ -96,7 +101,6 @@ export default function EquipmentList({
                                     )}
                                 </button>
 
-                                {/* Name */}
                                 <button
                                     type="button"
                                     onClick={() => onToggle(item.id)}
@@ -107,14 +111,12 @@ export default function EquipmentList({
                                     {item.name}
                                 </button>
 
-                                {/* Price */}
                                 <span className={`self-center text-right w-28 tabular-nums text-[0.92rem] ${
                                     isSelected ? 'text-(--ink-2)' : 'text-(--ink-3)'
                                 }`}>
                                     {formatCurrency(item.unitPrice ?? 0)}
                                 </span>
 
-                                {/* Quantity */}
                                 <div className="w-24 self-center flex items-center justify-center">
                                     <div className={`inline-flex items-center rounded border ${
                                         isSelected
@@ -126,7 +128,7 @@ export default function EquipmentList({
                                             onClick={() => onQuantityChange(item.id, Math.max(MIN_QUANTITY, currentQty - 1))}
                                             disabled={!isSelected || currentQty <= MIN_QUANTITY}
                                             className="w-7 h-8 flex items-center justify-center text-(--ink-2) hover:bg-(--surface-sunken) hover:text-(--ink-1) disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                            aria-label="Decrease quantity"
+                                            aria-label={t('decreaseQty')}
                                         >−</button>
                                         <input
                                             type="number"
@@ -138,6 +140,7 @@ export default function EquipmentList({
                                                 onQuantityChange(item.id, Math.max(MIN_QUANTITY, Math.min(maxQty, val)));
                                             }}
                                             disabled={!isSelected}
+                                            aria-label={t('quantityAria', { name: item.name })}
                                             className="w-9 h-8 text-center text-[0.9rem] tabular-nums bg-transparent text-(--ink-1) disabled:text-(--ink-3) border-x border-(--line) outline-none focus:bg-(--brand-50)"
                                         />
                                         <button
@@ -145,7 +148,7 @@ export default function EquipmentList({
                                             onClick={() => onQuantityChange(item.id, Math.min(maxQty, currentQty + 1))}
                                             disabled={!isSelected || currentQty >= maxQty}
                                             className="w-7 h-8 flex items-center justify-center text-(--ink-2) hover:bg-(--surface-sunken) hover:text-(--ink-1) disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                            aria-label="Increase quantity"
+                                            aria-label={t('increaseQty')}
                                         >+</button>
                                     </div>
                                 </div>
@@ -154,10 +157,9 @@ export default function EquipmentList({
                     })}
                 </ul>
 
-                {/* Subtotal band */}
                 <div className="flex items-center justify-between px-5 py-3.5 border-t border-(--line) bg-(--surface-sunken)">
                     <span className="text-[12.5px] uppercase tracking-[0.16em] font-semibold text-(--ink-2)">
-                        List subtotal
+                        {t('listSubtotal')}
                     </span>
                     <span className="font-display text-[1.25rem] tabular-nums text-(--clay-900)">
                         {formatCurrency(subtotal)}

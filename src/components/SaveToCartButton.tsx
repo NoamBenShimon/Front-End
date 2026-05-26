@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCart } from '@/contexts/CartContext';
 import Toast from './Toast';
 import { CartEntryPayload } from '@/types/cart';
@@ -25,6 +26,7 @@ export default function SaveToCartButton({
     disabled = false,
 }: SaveToCartButtonProps) {
     const { addToCart } = useCart();
+    const t = useTranslations('SaveToCart');
     const [isTemporarilyDisabled, setIsTemporarilyDisabled] = useState(false);
     const [showToast, setShowToast] = useState(false);
 
@@ -68,6 +70,7 @@ export default function SaveToCartButton({
         <>
             <div className="mt-6">
                 <button
+                    type="button"
                     onClick={handleSaveToCart}
                     disabled={isButtonDisabled}
                     className="relative w-full btn btn-primary !py-4 !text-[1rem] overflow-hidden"
@@ -78,14 +81,14 @@ export default function SaveToCartButton({
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
-                                Saved to cart
+                                {t('saved')}
                             </>
                         ) : (
                             <>
-                                Save list to cart
+                                {t('idle')}
                                 {validItemCount > 0 && (
                                     <span className="tabular-nums opacity-70 font-normal">
-                                        · {validItemCount} {validItemCount === 1 ? 'item' : 'items'}
+                                        {t('itemCount', { count: validItemCount })}
                                     </span>
                                 )}
                             </>
@@ -102,7 +105,7 @@ export default function SaveToCartButton({
             </div>
 
             <Toast
-                message="List saved to cart"
+                message={t('toast')}
                 isVisible={showToast}
                 onClose={handleCloseToast}
                 duration={DISABLED_DURATION}

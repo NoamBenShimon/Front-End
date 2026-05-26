@@ -2,12 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import Layout from '@/components/Layout';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useCart, CartEntry } from '@/contexts/CartContext';
 
 export default function CartPage() {
     const { cartEntries, removeFromCart, clearCart } = useCart();
+    const t = useTranslations('Cart');
+    const tCommon = useTranslations('Common');
+    const locale = useLocale();
 
     const [dialogState, setDialogState] = useState<{
         isOpen: boolean;
@@ -35,11 +39,12 @@ export default function CartPage() {
 
     const handleCancel = () => setDialogState({ isOpen: false, type: 'remove' });
 
+    const dateLocale = locale === 'he' ? 'he-IL' : undefined;
     const formatDate = (timestamp: number) => {
-        if (!timestamp || isNaN(timestamp)) return 'just now';
+        if (!timestamp || isNaN(timestamp)) return t('justNow');
         const date = new Date(timestamp);
-        if (isNaN(date.getTime())) return 'just now';
-        return date.toLocaleDateString(undefined, {
+        if (isNaN(date.getTime())) return t('justNow');
+        return date.toLocaleDateString(dateLocale, {
             day: 'numeric',
             month: 'short',
             hour: '2-digit',
@@ -47,7 +52,7 @@ export default function CartPage() {
         });
     };
 
-    const formatCurrency = (amount: number) => `${amount.toFixed(2)} ILS`;
+    const formatCurrency = (amount: number) => tCommon('currencyILS', { amount: amount.toFixed(2) });
 
     const totalItems = cartEntries.reduce(
         (sum, entry) =>
@@ -71,14 +76,18 @@ export default function CartPage() {
         <Layout>
             <div className="max-w-4xl mx-auto px-5 sm:px-8 py-12">
                 <header className="mb-8 animate-rise-in">
-                    <p className="eyebrow mb-2">Step 2 of 3</p>
+                    <p className="eyebrow mb-2">{t('stepIndicator')}</p>
                     <div className="flex justify-between items-end gap-4">
                         <h1 className="font-display text-[2.4rem] sm:text-[2.8rem] tracking-tight text-(--ink-1) leading-none">
-                            Your cart
+                            {t('title')}
                         </h1>
                         {cartEntries.length > 0 && (
-                            <button onClick={handleClearClick} className="btn btn-danger-quiet text-[13px] !py-1.5 !px-2.5">
-                                Clear all
+                            <button
+                                type="button"
+                                onClick={handleClearClick}
+                                className="btn btn-danger-quiet text-[13px] !py-1.5 !px-2.5"
+                            >
+                                {t('clearAll')}
                             </button>
                         )}
                     </div>
@@ -99,25 +108,22 @@ export default function CartPage() {
                                 <circle cx="17" cy="20" r="1.2" fill="currentColor" />
                             </svg>
                         </div>
-                        <h2 className="font-display text-[1.4rem] text-(--ink-1) mb-1.5">Your cart is empty</h2>
+                        <h2 className="font-display text-[1.4rem] text-(--ink-1) mb-1.5">{t('emptyTitle')}</h2>
                         <p className="text-[0.93rem] text-ink-2 mb-6 max-w-sm mx-auto">
-                            Once you save a school&#39;s equipment list, it will appear here ready
-                            for checkout.
+                            {t('emptySubtitle')}
                         </p>
                         <Link href="/" className="btn btn-primary">
-                            Browse equipment lists
+                            {t('browseEquipment')}
                         </Link>
                     </div>
                 ) : (
                     <>
-                        {/* Summary band */}
                         <div className="grid grid-cols-3 gap-px bg-(--line) border border-(--line) rounded overflow-hidden mb-8 animate-rise-in delay-1">
-                            <Stat label="Lists" value={cartEntries.length} />
-                            <Stat label="Items" value={totalItems} />
-                            <Stat label="Total" value={formatCurrency(totalCost)} accent />
+                            <Stat label={t('statLists')} value={cartEntries.length} />
+                            <Stat label={t('statItems')} value={totalItems} />
+                            <Stat label={t('statTotal')} value={formatCurrency(totalCost)} accent />
                         </div>
 
-                        {/* Entries */}
                         <div className="space-y-5">
                             {cartEntries.map((entry, idx) => {
                                 const subtotal = entry.items.reduce(
@@ -137,14 +143,15 @@ export default function CartPage() {
                                                 </h3>
                                                 <p className="text-[13px] text-ink-2 mt-0.5">{entry.grade.name}</p>
                                                 <p className="text-[11px] uppercase tracking-[0.12em] text-(--ink-3) mt-2">
-                                                    Added {formatDate(entry.timestamp)}
+                                                    {t('addedAt', { date: formatDate(entry.timestamp) })}
                                                 </p>
                                             </div>
                                             <button
+                                                type="button"
                                                 onClick={() => handleRemoveClick(entry)}
                                                 className="btn btn-danger-quiet !p-2 !px-2"
-                                                aria-label="Remove this list from cart"
-                                                title="Remove from cart"
+                                                aria-label={t('removeAriaLabel')}
+                                                title={t('removeTitle')}
                                             >
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                                     <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -155,10 +162,10 @@ export default function CartPage() {
                                         <div className="px-5 sm:px-6 py-4">
                                             <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-5 text-[0.92rem]">
                                                 <div className="contents text-[10.5px] uppercase tracking-[0.14em] text-(--ink-3) font-semibold pb-2">
-                                                    <span>Item</span>
-                                                    <span className="text-right">Qty</span>
-                                                    <span className="text-right">Unit</span>
-                                                    <span className="text-right">Total</span>
+                                                    <span>{t('itemColumn')}</span>
+                                                    <span className="text-right">{t('qtyColumn')}</span>
+                                                    <span className="text-right">{t('unitColumn')}</span>
+                                                    <span className="text-right">{t('totalColumn')}</span>
                                                 </div>
                                                 {entry.items.map(item => {
                                                     const unitPrice = item.unitPrice ?? 1;
@@ -175,7 +182,7 @@ export default function CartPage() {
 
                                             <div className="flex justify-between items-center mt-3 pt-3 border-t border-(--line)">
                                                 <span className="text-[11.5px] uppercase tracking-[0.14em] font-semibold text-ink-2">
-                                                    List subtotal
+                                                    {t('listSubtotal')}
                                                 </span>
                                                 <span className="font-display text-[1.15rem] tabular-nums text-(--clay-900)">
                                                     {formatCurrency(subtotal)}
@@ -187,15 +194,13 @@ export default function CartPage() {
                             })}
                         </div>
 
-                        {/* Checkout */}
                         <div className="mt-10 pt-8 border-t border-(--line)">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                 <p className="text-[14px] text-ink-2">
-                                    Ready to complete your order? You&#39;ll be redirected to a secure
-                                    payment page.
+                                    {t('checkoutNotice')}
                                 </p>
                                 <div className="text-right">
-                                    <p className="text-[11px] uppercase tracking-[0.14em] text-(--ink-3) font-semibold">Order total</p>
+                                    <p className="text-[11px] uppercase tracking-[0.14em] text-(--ink-3) font-semibold">{t('orderTotal')}</p>
                                     <p className="font-display text-[1.9rem] tabular-nums text-(--clay-900) leading-none mt-1">
                                         {formatCurrency(totalCost)}
                                     </p>
@@ -205,7 +210,7 @@ export default function CartPage() {
                                 href="/checkout"
                                 className="btn btn-primary w-full !py-4 !text-[1rem]"
                             >
-                                Proceed to checkout
+                                {t('checkout')}
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
@@ -217,14 +222,14 @@ export default function CartPage() {
 
             <ConfirmDialog
                 isOpen={dialogState.isOpen}
-                title={dialogState.type === 'clear' ? 'Clear entire cart?' : 'Remove this list?'}
+                title={dialogState.type === 'clear' ? t('dialogClearTitle') : t('dialogRemoveTitle')}
                 message={
                     dialogState.type === 'clear'
-                        ? 'All saved equipment lists will be removed from your cart. This cannot be undone.'
-                        : `“${dialogState.entryName}” will be removed from your cart.`
+                        ? t('dialogClearMessage')
+                        : t('dialogRemoveMessage', { name: dialogState.entryName ?? '' })
                 }
-                confirmLabel={dialogState.type === 'clear' ? 'Clear all' : 'Remove'}
-                cancelLabel="Keep"
+                confirmLabel={dialogState.type === 'clear' ? t('dialogClearConfirm') : t('dialogRemoveConfirm')}
+                cancelLabel={t('dialogKeep')}
                 onConfirm={handleConfirm}
                 onCancel={handleCancel}
                 variant="danger"
