@@ -160,6 +160,16 @@
     "declined": "Payment declined by mock provider",
     "loading": "Loading..."
   },
+  "PaymentSuccess": {
+    "eyebrow": "Order confirmed",
+    "title": "Thank you. Your order is on its way.",
+    "clearedMessage": "Your payment was received and your cart has been cleared. You will receive a confirmation by email shortly.",
+    "clearingMessage": "Finalising your order...",
+    "invalidMessage": "We could not confirm your payment session, but your cart has not been touched. Please contact support if you were charged.",
+    "returnHome": "Return home",
+    "needHelp": "Need help?",
+    "loading": "Loading..."
+  },
   "About": {
     "eyebrow": "About",
     "title": "About Motzkin Store",
