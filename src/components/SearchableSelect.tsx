@@ -112,11 +112,12 @@ export default function SearchableSelect({
                     type="text"
                     disabled={disabled}
                     readOnly={!!selectedItem}
-                    className={`field-input pr-10 ${
+                    className={`field-input ${
                         selectedItem
                             ? '!bg-(--brand-50) !border-(--brand-200) !text-(--brand-900) cursor-default font-medium'
                             : ''
                     }`}
+                    style={{ paddingInlineEnd: '2.5rem' }}
                     placeholder={placeholder}
                     value={query}
                     onChange={e => setQuery(e.target.value)}
@@ -134,7 +135,8 @@ export default function SearchableSelect({
                         onClick={handleClear}
                         aria-label={`Clear ${label.toLowerCase()} selection`}
                         title="Clear selection"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 inline-flex items-center justify-center rounded text-(--ink-3) hover:text-(--ink-1) hover:bg-(--surface-sunken) transition-colors"
+                        className="absolute top-1/2 -translate-y-1/2 w-7 h-7 inline-flex items-center justify-center rounded text-(--ink-3) hover:text-(--ink-1) hover:bg-(--surface-sunken) transition-colors"
+                        style={{ insetInlineEnd: '0.5rem' }}
                     >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path
@@ -147,7 +149,8 @@ export default function SearchableSelect({
                     </button>
                 ) : (
                     <span
-                        className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-(--ink-3)"
+                        className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-(--ink-3)"
+                        style={{ insetInlineEnd: '0.875rem' }}
                         aria-hidden="true"
                     >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
