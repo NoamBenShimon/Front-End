@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import Layout from '@/components/Layout';
 import SearchableSelect, { SelectItem } from '@/components/SearchableSelect';
 import EquipmentList, { EquipmentData } from '@/components/EquipmentList';
@@ -48,9 +49,6 @@ const normalizeEquipmentItems = (items: RawEquipmentItem[]): EquipmentItemRespon
                     : item.unitPrice,
     }));
 
-// Bail-out helpers so the equipment-init effect below can short-circuit when
-// the derived state already matches — required to satisfy the
-// react-hooks/set-state-in-effect lint rule.
 const areNumberSetsEqual = (a: Set<number>, b: Set<number>): boolean => {
     if (a === b) return true;
     if (a.size !== b.size) return false;
@@ -71,6 +69,7 @@ const areNumberMapsEqual = (a: Map<number, number>, b: Map<number, number>): boo
 
 export default function Home() {
     const { isAuthenticated } = useAuth();
+    const t = useTranslations('Home');
 
     const [selection, setSelection] = useState<SelectionState>({ school: null, grade: null });
     const [schools, setSchools] = useState<SelectItem[]>([]);
@@ -117,17 +116,10 @@ export default function Home() {
 
     useEffect(() => {
         if (!isAuthenticated) return;
-        // External fetch on mount/auth-change — the lint rule can't tell that
-        // the setSchools call happens after an `await` inside fetchData rather
-        // than synchronously in this effect body.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchData('/api/schools', setSchools, false);
     }, [fetchData, isAuthenticated]);
 
-    // Reset selection/quantity state when the equipment list changes by
-    // comparing the previous reference during render — the React-recommended
-    // "Adjusting state while rendering" pattern, which avoids a
-    // setState-in-effect lint violation.
     const [prevEquipmentData, setPrevEquipmentData] = useState<EquipmentData | null>(equipmentData);
     if (equipmentData !== prevEquipmentData) {
         setPrevEquipmentData(equipmentData);
@@ -187,13 +179,11 @@ export default function Home() {
         });
     };
 
-    // Step progression
     const currentStep = equipmentData ? 3 : selection.school ? 2 : 1;
 
     return (
         <Layout>
             <div className="relative">
-                {/* Decorative arched band, very subtle — gives the hero a sense of "place" */}
                 <div className="absolute inset-x-0 top-0 h-[280px] pointer-events-none overflow-hidden">
                     <div
                         className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[400px] rounded-[50%]"
@@ -205,54 +195,58 @@ export default function Home() {
                 </div>
 
                 <div className="relative max-w-3xl mx-auto px-5 sm:px-8 pt-12 pb-20">
-                    {/* Hero */}
                     <header className="text-center mb-10 animate-rise-in">
-                        <p className="eyebrow mb-3">School supplies</p>
+                        <p className="eyebrow mb-3">{t('eyebrow')}</p>
                         <h1 className="font-display text-[2.6rem] sm:text-[3.2rem] leading-[1.05] tracking-tight text-(--ink-1) mb-4">
-                            Order your child&#39;s
-                            <br />
-                            <span className="text-(--brand-900) italic" style={{ fontVariationSettings: '"WONK" 1' }}>
-                                school list
-                            </span>
-                            <span className="text-(--ink-1)">, in one go.</span>
+                            {t.rich('headline', {
+                                br: () => <br />,
+                                accent: (chunks) => (
+                                    <span
+                                        className="text-(--brand-900) italic"
+                                        style={{ fontVariationSettings: '"WONK" 1' }}
+                                    >
+                                        {chunks}
+                                    </span>
+                                ),
+                                trail: (chunks) => (
+                                    <span className="text-(--ink-1)">{chunks}</span>
+                                ),
+                            })}
                         </h1>
                         <p className="text-[1.05rem] leading-relaxed text-ink-2 max-w-xl mx-auto">
-                            Pick your school and your child&#39;s grade to see the equipment list,
-                            then check out in one payment.
+                            {t('subtitle')}
                         </p>
                     </header>
 
-                    {/* Step indicator */}
                     <ol className="flex items-center justify-center gap-2 mb-10 text-[12px] uppercase tracking-[0.14em] animate-rise-in delay-1">
-                        <Step label="School" index={1} current={currentStep} />
+                        <Step label={t('stepSchool')} index={1} current={currentStep} />
                         <Connector active={currentStep > 1} />
-                        <Step label="Grade" index={2} current={currentStep} />
+                        <Step label={t('stepGrade')} index={2} current={currentStep} />
                         <Connector active={currentStep > 2} />
-                        <Step label="Items" index={3} current={currentStep} />
+                        <Step label={t('stepItems')} index={3} current={currentStep} />
                     </ol>
 
-                    {/* Selection card */}
                     <div className="surface-card p-6 sm:p-8 animate-rise-in delay-2">
                         <SearchableSelect
-                            label="School"
+                            label={t('schoolLabel')}
                             items={schools}
-                            placeholder={isLoading && schools.length === 0 ? 'Loading schools…' : 'Search for a school'}
+                            placeholder={isLoading && schools.length === 0 ? t('schoolLoading') : t('schoolPlaceholder')}
                             onSelect={handleSchoolSelect}
                             onClear={handleSchoolClear}
                             disabled={isLoading && schools.length === 0}
-                            hint={!selection.school ? 'Start by selecting the school your child attends.' : undefined}
+                            hint={!selection.school ? t('schoolHint') : undefined}
                         />
 
                         {grades.length > 0 && (
                             <div className="animate-rise-in">
                                 <SearchableSelect
-                                    label="Grade"
+                                    label={t('gradeLabel')}
                                     items={grades}
-                                    placeholder={selection.school ? 'Search for a grade' : 'Select a school first'}
+                                    placeholder={selection.school ? t('gradePlaceholder') : t('gradeSelectSchoolFirst')}
                                     onSelect={handleGradeSelect}
                                     onClear={handleGradeClear}
                                     disabled={!selection.school || isLoading}
-                                    hint={!selection.grade && selection.school ? 'Pick the grade your child is starting.' : undefined}
+                                    hint={!selection.grade && selection.school ? t('gradeHint') : undefined}
                                 />
                             </div>
                         )}
@@ -263,7 +257,7 @@ export default function Home() {
                                     <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
                                     <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                 </svg>
-                                <span className="text-[13px]">Loading…</span>
+                                <span className="text-[13px]">{t('loading')}</span>
                             </div>
                         )}
 
@@ -271,8 +265,7 @@ export default function Home() {
                             <div className="mt-6 flex items-start gap-3 p-4 bg-(--brand-50) border border-(--brand-200) rounded">
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-(--brand-700) text-(--surface-page) text-[10px] font-bold flex-shrink-0 mt-0.5">i</span>
                                 <p className="text-[13px] leading-relaxed text-(--brand-900)">
-                                    If something on the list looks wrong, please check with the
-                                    school secretariat first.
+                                    {t('secretariatNotice')}
                                 </p>
                             </div>
                         )}

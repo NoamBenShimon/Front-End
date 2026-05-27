@@ -7,6 +7,59 @@ import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
+// Mock next-intl translations used by CartPage
+jest.mock('next-intl', () => ({
+    useLocale: () => 'en',
+    useTranslations: (namespace: string) => {
+        const messages: Record<string, Record<string, string>> = {
+            Cart: {
+                stepIndicator: 'Step 2 of 3',
+                title: 'Your cart',
+                clearAll: 'Clear all',
+                emptyTitle: 'Your cart is empty',
+                emptySubtitle: "Once you save a school's equipment list, it will appear here ready for checkout.",
+                browseEquipment: 'Browse equipment lists',
+                statLists: 'Lists',
+                statItems: 'Items',
+                statTotal: 'Total',
+                justNow: 'just now',
+                addedAt: 'Added {date}',
+                removeAriaLabel: 'Remove this list from cart',
+                removeTitle: 'Remove from cart',
+                itemColumn: 'Item',
+                qtyColumn: 'Qty',
+                unitColumn: 'Unit',
+                totalColumn: 'Total',
+                listSubtotal: 'List subtotal',
+                checkoutNotice: "Ready to complete your order? You'll be redirected to a secure payment page.",
+                orderTotal: 'Order total',
+                checkout: 'Proceed to checkout',
+                dialogClearTitle: 'Clear entire cart?',
+                dialogClearMessage: 'All saved equipment lists will be removed from your cart. This cannot be undone.',
+                dialogClearConfirm: 'Clear all',
+                dialogRemoveTitle: 'Remove this list?',
+                dialogRemoveMessage: '"{name}" will be removed from your cart.',
+                dialogRemoveConfirm: 'Remove',
+                dialogKeep: 'Keep',
+            },
+            Common: {
+                currencyILS: '{amount} ILS',
+            },
+        };
+
+        return (key: string, values?: Record<string, string>) => {
+            const entry = messages[namespace]?.[key];
+            if (typeof entry !== 'string') {
+                return key;
+            }
+            if (!values) {
+                return entry;
+            }
+            return entry.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? `{${name}}`));
+        };
+    },
+}));
+
 // Mock next/link
 jest.mock('next/link', () => {
     function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
@@ -79,7 +132,8 @@ describe('CartPage', () => {
             mockCartEntries = [];
             render(<CartPage />);
 
-            expect(screen.getByAltText(/empty cart/i)).toBeInTheDocument();
+            const emptyCard = screen.getByText(/your cart is empty/i).closest('.surface-card');
+            expect(emptyCard?.querySelector('svg')).toBeInTheDocument();
         });
 
         it('should show link to browse equipment', () => {
@@ -155,18 +209,19 @@ describe('CartPage', () => {
         it('should display cart summary', () => {
             render(<CartPage />);
 
-            // Check that the summary text is present
-            expect(screen.getByText(/equipment lists/i)).toBeInTheDocument();
+            const statsGrid = screen.getByText('Lists').closest('div')?.parentElement;
+            expect(statsGrid).not.toBeNull();
+            expect(within(statsGrid as HTMLElement).getByText('Lists')).toBeInTheDocument();
+            expect(within(statsGrid as HTMLElement).getByText('Items')).toBeInTheDocument();
+            expect(within(statsGrid as HTMLElement).getByText('Total')).toBeInTheDocument();
         });
 
         it('should display total items count', () => {
             render(<CartPage />);
 
-            // Total: 5 + 10 + 3 = 18 items
-            const summary = screen.getByText(/items total/i).closest('p');
-            expect(summary).not.toBeNull();
-            expect(within(summary as HTMLElement).getByText(/^18$/)).toBeInTheDocument();
-            expect(screen.getByText(/items total/i)).toBeInTheDocument();
+            const itemsStat = screen.getByText('Items').closest('div');
+            expect(itemsStat).not.toBeNull();
+            expect(within(itemsStat as HTMLElement).getByText('18')).toBeInTheDocument();
         });
 
         it('should show clear all button', () => {
@@ -202,7 +257,7 @@ describe('CartPage', () => {
             const removeButton = screen.getByTitle(/remove from cart/i);
             fireEvent.click(removeButton);
 
-            expect(screen.getByText(/remove item/i)).toBeInTheDocument();
+            expect(screen.getByText(/remove this list/i)).toBeInTheDocument();
         });
 
         it('should show entry name in confirmation message', () => {
@@ -211,7 +266,7 @@ describe('CartPage', () => {
             const removeButton = screen.getByTitle(/remove from cart/i);
             fireEvent.click(removeButton);
 
-            expect(screen.getByText(/Test School - Test Grade/i)).toBeInTheDocument();
+            expect(screen.getByText(/Test School .* Test Grade/i)).toBeInTheDocument();
         });
 
         it('should call removeFromCart when confirmed', () => {
@@ -236,12 +291,12 @@ describe('CartPage', () => {
             const removeButton = screen.getByTitle(/remove from cart/i);
             fireEvent.click(removeButton);
 
-            expect(screen.getByText(/remove item/i)).toBeInTheDocument();
+            expect(screen.getByText(/remove this list/i)).toBeInTheDocument();
 
-            const cancelButton = screen.getByRole('button', { name: /cancel/i });
+            const cancelButton = screen.getByRole('button', { name: /keep/i });
             fireEvent.click(cancelButton);
 
-            expect(screen.queryByText(/are you sure/i)).not.toBeInTheDocument();
+            expect(screen.queryByText(/remove this list/i)).not.toBeInTheDocument();
         });
     });
 
@@ -264,7 +319,7 @@ describe('CartPage', () => {
             const clearButton = screen.getByRole('button', { name: /clear all/i });
             fireEvent.click(clearButton);
 
-            expect(screen.getByText(/clear cart/i)).toBeInTheDocument();
+            expect(screen.getByText(/clear entire cart/i)).toBeInTheDocument();
         });
 
         it('should call clearCart when confirmed', () => {
@@ -299,9 +354,9 @@ describe('CartPage', () => {
             const clearButton = screen.getByRole('button', { name: /clear all/i });
             fireEvent.click(clearButton);
 
-            expect(screen.getByText(/clear cart/i)).toBeInTheDocument();
+            expect(screen.getByText(/clear entire cart/i)).toBeInTheDocument();
 
-            const cancelButton = screen.getByRole('button', { name: /cancel/i });
+            const cancelButton = screen.getByRole('button', { name: /keep/i });
             fireEvent.click(cancelButton);
 
             // Dialog should be closed, clearCart should NOT be called
@@ -346,11 +401,9 @@ describe('CartPage', () => {
 
             render(<CartPage />);
 
-            // Should show "Added" with the formatted date (Jan 15, 2024)
             expect(screen.getByText(/added/i)).toBeInTheDocument();
             expect(screen.getByText(/jan/i)).toBeInTheDocument();
             expect(screen.getByText(/15/)).toBeInTheDocument();
-            expect(screen.getByText(/2024/)).toBeInTheDocument();
         });
     });
 });

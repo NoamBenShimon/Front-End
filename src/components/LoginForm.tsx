@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginForm() {
@@ -14,6 +15,7 @@ export default function LoginForm() {
 
     const router = useRouter();
     const { login } = useAuth();
+    const t = useTranslations('Login');
 
     const isFormValid = username.trim() !== '' && password.trim() !== '';
 
@@ -28,7 +30,7 @@ export default function LoginForm() {
             router.push('/');
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : '';
-            setError(message || 'Failed to login. Please try again.');
+            setError(message || t('failed'));
         } finally {
             setIsLoading(false);
         }
@@ -36,16 +38,15 @@ export default function LoginForm() {
 
     return (
         <div className="w-full max-w-md mx-auto">
-            {/* Brand mark */}
             <div className="flex flex-col items-center mb-8 animate-rise-in">
                 <Link href="/" className="flex items-center gap-3 mb-2">
                     <span className="crest">M</span>
                     <span className="flex flex-col leading-none">
                         <span className="font-display text-[1.55rem] tracking-tight text-(--ink-1)">
-                            Motzkin Store
+                            {t('brand')}
                         </span>
                         <span className="text-[10.5px] uppercase tracking-[0.18em] text-(--ink-3) mt-1">
-                            City of Kiryat Motzkin
+                            {t('tagline')}
                         </span>
                     </span>
                 </Link>
@@ -53,12 +54,12 @@ export default function LoginForm() {
 
             <div className="surface-card p-8 sm:p-10 animate-rise-in delay-1">
                 <header className="mb-7">
-                    <p className="eyebrow mb-2">Parent sign-in</p>
+                    <p className="eyebrow mb-2">{t('eyebrow')}</p>
                     <h1 className="font-display text-[1.95rem] tracking-tight text-(--ink-1) leading-tight mb-2">
-                        Login
+                        {t('title')}
                     </h1>
                     <p className="text-[0.93rem] text-ink-2">
-                        Sign in to access this year&#39;s equipment lists and complete your order.
+                        {t('intro')}
                     </p>
                 </header>
 
@@ -75,7 +76,7 @@ export default function LoginForm() {
                     )}
 
                     <div>
-                        <label htmlFor="username" className="field-label">Username</label>
+                        <label htmlFor="username" className="field-label">{t('usernameLabel')}</label>
                         <input
                             id="username"
                             type="text"
@@ -83,14 +84,14 @@ export default function LoginForm() {
                             onChange={e => setUsername(e.target.value)}
                             disabled={isLoading}
                             className="field-input"
-                            placeholder="e.g. parent.name"
+                            placeholder={t('usernamePlaceholder')}
                             autoComplete="username"
                             autoFocus
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="field-label">Password</label>
+                        <label htmlFor="password" className="field-label">{t('passwordLabel')}</label>
                         <div className="relative">
                             <input
                                 id="password"
@@ -99,7 +100,7 @@ export default function LoginForm() {
                                 onChange={e => setPassword(e.target.value)}
                                 disabled={isLoading}
                                 className="field-input pr-20"
-                                placeholder="••••••••"
+                                placeholder={t('passwordPlaceholder')}
                                 autoComplete="current-password"
                             />
                             <button
@@ -108,7 +109,7 @@ export default function LoginForm() {
                                 onClick={() => setShowPwd(s => !s)}
                                 className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wider text-(--ink-3) hover:text-(--ink-1) rounded transition-colors"
                             >
-                                {showPwd ? 'Hide' : 'Show'}
+                                {showPwd ? t('hide') : t('show')}
                             </button>
                         </div>
                     </div>
@@ -124,10 +125,10 @@ export default function LoginForm() {
                                     <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="2.5" />
                                     <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                                 </svg>
-                                Signing in…
+                                {t('submitting')}
                             </>
                         ) : (
-                            'Login'
+                            t('submit')
                         )}
                     </button>
                 </form>
@@ -135,11 +136,16 @@ export default function LoginForm() {
                 <div className="divider-soft mt-7 mb-5" />
 
                 <p className="text-[12px] text-(--ink-3) text-center leading-relaxed">
-                    Trouble signing in? Call the municipal service centre at{' '}
-                    <a href="tel:+97248780900" className="text-(--brand-700) hover:underline whitespace-nowrap">
-                        04-878-0900
-                    </a>{' '}
-                    or dial <span className="whitespace-nowrap">*5470</span>.
+                    {t.rich('trouble', {
+                        phone: (chunks) => (
+                            <a href="tel:+97248780900" className="text-(--brand-700) hover:underline whitespace-nowrap">
+                                {chunks}
+                            </a>
+                        ),
+                        quickDial: (chunks) => (
+                            <span className="whitespace-nowrap">{chunks}</span>
+                        ),
+                    })}
                 </p>
             </div>
         </div>

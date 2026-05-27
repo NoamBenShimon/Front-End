@@ -1,65 +1,66 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 
 export default function ContactPage() {
+    const t = useTranslations('Contact');
+
     return (
         <Layout>
             <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
                 {/* Hero */}
                 <header className="mb-12 max-w-2xl animate-rise-in">
-                    <p className="eyebrow mb-3">Get in touch</p>
+                    <p className="eyebrow mb-3">{t('eyebrow')}</p>
                     <h1 className="font-display text-[2.6rem] sm:text-[3rem] leading-[1.05] tracking-tight text-(--ink-1) mb-4">
-                        We&#39;re here to help.
+                        {t('title')}
                     </h1>
                     <p className="text-[1.05rem] leading-relaxed text-ink-2">
-                        For questions about school equipment orders, payments, or
-                        technical issues, reach out to the municipality&#39;s service centre
-                        or to the developer team.
+                        {t('subtitle')}
                     </p>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
-                    {/* Municipality — primary card, spans wider */}
+                    {/* Municipality */}
                     <section className="lg:col-span-3 surface-card overflow-hidden animate-rise-in delay-1">
                         <div className="px-7 pt-6 pb-1 bg-(--surface-sunken) border-b border-(--line)">
-                            <p className="eyebrow mb-1">Municipality</p>
+                            <p className="eyebrow mb-1">{t('municipalityEyebrow')}</p>
                             <h2 className="font-display text-[1.7rem] tracking-tight text-(--ink-1) mb-3 leading-tight">
-                                Kiryat Motzkin City Hall
+                                {t('municipalityHeading')}
                             </h2>
                         </div>
 
                         <div className="px-7 py-6 space-y-6">
-                            <ContactRow label="Address">
+                            <ContactRow label={t('address')}>
                                 <a
                                     href="https://maps.app.goo.gl/jz7yv3hggruuKcjs9"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-(--ink-1) hover:text-(--brand-900) transition-colors underline decoration-(--line-strong) underline-offset-4 hover:decoration-(--brand-700)"
                                 >
-                                    Lev Hakrayot Centre<br />
-                                    Ben Gurion Boulevard 80<br />
-                                    Kiryat Motzkin, Israel
+                                    {t('addressLine1')}<br />
+                                    {t('addressLine2')}<br />
+                                    {t('addressLine3')}
                                 </a>
                             </ContactRow>
 
-                            <ContactRow label="Service centre">
+                            <ContactRow label={t('serviceCenter')}>
                                 <ul className="space-y-1.5">
                                     <li className="flex items-center justify-between gap-4">
-                                        <span className="text-ink-2 text-[13.5px]">Main line</span>
+                                        <span className="text-ink-2 text-[13.5px]">{t('mainLine')}</span>
                                         <a href="tel:+97248780900" className="text-(--ink-1) tabular-nums hover:text-(--brand-900) transition-colors">
                                             04-878-0900
                                         </a>
                                     </li>
                                     <li className="flex items-center justify-between gap-4">
-                                        <span className="text-ink-2 text-[13.5px]">Quick dial</span>
+                                        <span className="text-ink-2 text-[13.5px]">{t('quickDial')}</span>
                                         <a href="tel:*5470" className="text-(--ink-1) tabular-nums hover:text-(--brand-900) transition-colors">
                                             *5470
                                         </a>
                                     </li>
                                     <li className="flex items-center justify-between gap-4">
-                                        <span className="text-ink-2 text-[13.5px]">WhatsApp</span>
+                                        <span className="text-ink-2 text-[13.5px]">{t('whatsapp')}</span>
                                         <a
                                             href="https://wa.me/972542223352"
                                             target="_blank"
@@ -72,13 +73,13 @@ export default function ContactPage() {
                                 </ul>
                             </ContactRow>
 
-                            <ContactRow label="General enquiries">
+                            <ContactRow label={t('generalInquiries')}>
                                 <a href="tel:+97248780222" className="text-(--ink-1) tabular-nums hover:text-(--brand-900) transition-colors">
                                     04-878-0222
                                 </a>
                             </ContactRow>
 
-                            <ContactRow label="Website">
+                            <ContactRow label={t('website')}>
                                 <a
                                     href="https://www.kiryat-motzkin.muni.il"
                                     target="_blank"
@@ -94,21 +95,20 @@ export default function ContactPage() {
                     {/* Development team */}
                     <section className="lg:col-span-2 surface-card flex flex-col animate-rise-in delay-2">
                         <div className="px-7 pt-6 pb-1 bg-(--surface-sunken) border-b border-(--line)">
-                            <p className="eyebrow mb-1">Development</p>
+                            <p className="eyebrow mb-1">{t('developmentEyebrow')}</p>
                             <h2 className="font-display text-[1.55rem] tracking-tight text-(--ink-1) mb-3 leading-tight">
-                                Site &amp; technical support
+                                {t('devTeamHeading')}
                             </h2>
                         </div>
                         <div className="px-7 py-6 flex-1 flex flex-col">
                             <p className="text-[14px] leading-relaxed text-ink-2 mb-4">
-                                Found a bug or have a feature suggestion? Our development team
-                                handles it on GitHub.
+                                {t('devTeamIntro')}
                             </p>
                             <p className="text-[14px] leading-relaxed text-ink-2 mb-6">
-                                Team profiles and direct links are on the About page.
+                                {t('devTeamFind')}
                             </p>
                             <Link href="/about" className="btn btn-quiet mt-auto self-start">
-                                Meet the team →
+                                {t('viewTeam')}
                             </Link>
                         </div>
                     </section>
@@ -118,14 +118,14 @@ export default function ContactPage() {
                 <section className="surface-card p-7 sm:p-8 animate-rise-in delay-3">
                     <div className="flex items-baseline justify-between mb-5 flex-wrap gap-2">
                         <h2 className="font-display text-[1.4rem] tracking-tight text-(--ink-1)">
-                            Office hours
+                            {t('officeHours')}
                         </h2>
-                        <p className="text-[12px] text-(--ink-3)">All times Israel Time (IST)</p>
+                        <p className="text-[12px] text-(--ink-3)">{t('timezoneNote')}</p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-(--line) border border-(--line) rounded overflow-hidden">
-                        <Hours title="Sunday – Tuesday, Thursday" hours="8:00 – 15:30" />
-                        <Hours title="Wednesday" hours="8:00 – 13:00\n16:00 – 18:00" />
-                        <Hours title="Friday – Saturday" hours="Closed" muted />
+                        <Hours title={t('weekdays')} hours={t('weekdaysHours')} />
+                        <Hours title={t('wednesday')} hours={t('wednesdayHours')} />
+                        <Hours title={t('weekend')} hours={t('weekendHours')} muted />
                     </div>
                 </section>
             </div>

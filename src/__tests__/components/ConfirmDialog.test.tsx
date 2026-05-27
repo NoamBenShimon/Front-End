@@ -82,10 +82,10 @@ describe('ConfirmDialog', () => {
         });
 
         it('should call onCancel when backdrop is clicked', () => {
-            render(<ConfirmDialog {...defaultProps} />);
+            const { container } = render(<ConfirmDialog {...defaultProps} />);
 
-            // Click the backdrop (the overlay behind the dialog)
-            const backdrop = document.querySelector('.bg-black\\/50');
+            const backdrop = container.querySelector('[aria-hidden="true"]');
+            expect(backdrop).toBeInTheDocument();
             if (backdrop) {
                 fireEvent.click(backdrop);
             }
@@ -121,14 +121,14 @@ describe('ConfirmDialog', () => {
             render(<ConfirmDialog {...defaultProps} variant="danger" />);
 
             const confirmButton = screen.getByRole('button', { name: /confirm/i });
-            expect(confirmButton).toHaveClass('bg-red-600');
+            expect(confirmButton).toHaveClass('btn-clay');
         });
 
         it('should apply default variant styling to confirm button', () => {
             render(<ConfirmDialog {...defaultProps} variant="default" />);
 
             const confirmButton = screen.getByRole('button', { name: /confirm/i });
-            expect(confirmButton).toHaveClass('bg-blue-600');
+            expect(confirmButton).toHaveClass('btn-primary');
         });
     });
 
@@ -177,7 +177,7 @@ describe('ConfirmDialog', () => {
 
             expect(screen.getByText('Remove Item')).toBeInTheDocument();
             expect(screen.getByText(/remove School A - Grade 1/i)).toBeInTheDocument();
-            expect(screen.getByRole('button', { name: /remove/i })).toHaveClass('bg-red-600');
+            expect(screen.getByRole('button', { name: /remove/i })).toHaveClass('btn-clay');
         });
 
         it('should work for clear cart confirmation', () => {
@@ -199,4 +199,3 @@ describe('ConfirmDialog', () => {
         });
     });
 });
-

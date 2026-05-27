@@ -3,16 +3,18 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Header() {
     const router = useRouter();
     const pathname = usePathname();
     const { isAuthenticated, logout } = useAuth();
+    const t = useTranslations('Header');
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    // Cart count — gracefully unavailable when not authenticated
     let cartCount = 0;
     try {
         const cart = useCart();
@@ -25,35 +27,37 @@ export default function Header() {
     };
 
     const navLinks = [
-        { href: '/', label: 'Home' },
-        { href: '/about', label: 'About' },
-        { href: '/contact', label: 'Contact' },
+        { href: '/', label: t('home') },
+        { href: '/about', label: t('about') },
+        { href: '/contact', label: t('contact') },
     ];
 
     const isCurrent = (href: string) =>
         href === '/' ? pathname === '/' : pathname?.startsWith(href);
 
+    const cartAriaLabel = t('cartAriaLabel', {
+        count: cartCount,
+        list: cartCount === 1 ? t('cartListSingular') : t('cartListPlural'),
+    });
+
     return (
         <header className="relative z-30 bg-[var(--surface-page)]/85 backdrop-blur-md border-b border-[var(--line)]">
-            {/* fine top accent rule */}
             <div className="h-[3px] w-full bg-[var(--brand-900)]" />
 
             <nav className="max-w-6xl mx-auto px-5 sm:px-8">
                 <div className="flex justify-between items-center h-[72px]">
-                    {/* Brand cluster — crest + wordmark + municipal tagline */}
                     <Link href="/" className="flex items-center gap-3 group">
                         <span className="crest" aria-hidden="true">M</span>
                         <span className="flex flex-col leading-none">
                             <span className="font-display text-[1.45rem] tracking-tight text-[var(--ink-1)] group-hover:text-[var(--brand-900)] transition-colors">
-                                Motzkin Store
+                                {t('brand')}
                             </span>
                             <span className="text-[10.5px] uppercase tracking-[0.18em] text-[var(--ink-3)] mt-1">
-                                City of Kiryat Motzkin
+                                {t('tagline')}
                             </span>
                         </span>
                     </Link>
 
-                    {/* Desktop nav */}
                     <div className="hidden md:flex items-center gap-8">
                         <ul className="flex items-center gap-7">
                             {navLinks.map(link => (
@@ -71,21 +75,7 @@ export default function Header() {
 
                         <div className="hair-v h-5" />
 
-                        {/* Language toggle stub — future i18n */}
-                        <div
-                            className="flex items-center text-[12px] font-medium select-none"
-                            role="group"
-                            aria-label="Language (coming soon)"
-                            title="Hebrew support coming soon"
-                        >
-                            <span className="px-1.5 py-0.5 rounded-sm text-[var(--ink-1)] bg-[var(--surface-sunken)]">
-                                EN
-                            </span>
-                            <span className="mx-1 text-[var(--ink-3)]">/</span>
-                            <span className="px-1.5 py-0.5 rounded-sm text-[var(--ink-3)] hover:text-[var(--ink-2)] cursor-not-allowed">
-                                עב
-                            </span>
-                        </div>
+                        <LanguageSwitcher />
 
                         {isAuthenticated && (
                             <>
@@ -94,10 +84,10 @@ export default function Header() {
                                 <Link
                                     href="/cart"
                                     className="relative inline-flex items-center gap-2 nav-link"
-                                    aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'list' : 'lists'}`}
+                                    aria-label={cartAriaLabel}
                                 >
                                     <CartIcon filled={cartCount > 0} />
-                                    <span className="text-[var(--ink-2)]">Cart</span>
+                                    <span className="text-[var(--ink-2)]">{t('cart')}</span>
                                     {cartCount > 0 && (
                                         <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10.5px] font-semibold leading-none rounded-full bg-[var(--clay-700)] text-[#FFF8EF] tabular-nums">
                                             {cartCount}
@@ -106,20 +96,20 @@ export default function Header() {
                                 </Link>
 
                                 <button
+                                    type="button"
                                     onClick={handleLogout}
                                     className="text-[13px] font-medium text-[var(--ink-3)] hover:text-[var(--ink-1)] transition-colors"
                                 >
-                                    Sign out
+                                    {t('signOut')}
                                 </button>
                             </>
                         )}
                     </div>
 
-                    {/* Mobile trigger */}
                     <button
                         type="button"
                         className="md:hidden p-2 -mr-2 text-[var(--ink-1)]"
-                        aria-label="Open menu"
+                        aria-label={t('openMenu')}
                         aria-expanded={mobileOpen}
                         onClick={() => setMobileOpen(v => !v)}
                     >
@@ -137,7 +127,6 @@ export default function Header() {
                     </button>
                 </div>
 
-                {/* Mobile drawer */}
                 {mobileOpen && (
                     <div className="md:hidden pb-6 pt-2 animate-rise-in">
                         <ul className="flex flex-col gap-1 border-t border-[var(--line)] pt-4">
@@ -163,7 +152,7 @@ export default function Header() {
                                         >
                                             <span className="inline-flex items-center gap-2">
                                                 <CartIcon filled={cartCount > 0} />
-                                                Cart
+                                                {t('cart')}
                                             </span>
                                             {cartCount > 0 && (
                                                 <span className="text-[11px] font-semibold tabular-nums px-2 py-0.5 rounded-full bg-[var(--clay-50)] text-[var(--clay-900)]">
@@ -174,17 +163,18 @@ export default function Header() {
                                     </li>
                                     <li>
                                         <button
+                                            type="button"
                                             onClick={() => { setMobileOpen(false); handleLogout(); }}
                                             className="w-full text-left py-2.5 px-2 text-[0.95rem] text-[var(--ink-2)] hover:bg-[var(--surface-sunken)] rounded"
                                         >
-                                            Sign out
+                                            {t('signOut')}
                                         </button>
                                     </li>
                                 </>
                             )}
                             <li className="pt-3 mt-2 border-t border-[var(--line)]">
-                                <div className="px-2 text-[11px] uppercase tracking-[0.18em] text-[var(--ink-3)]">
-                                    Language · Hebrew coming soon
+                                <div className="px-2 py-2">
+                                    <LanguageSwitcher />
                                 </div>
                             </li>
                         </ul>

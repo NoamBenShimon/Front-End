@@ -62,7 +62,7 @@ describe('EquipmentList', () => {
 
             expect(screen.getByText('Item')).toBeInTheDocument();
             expect(screen.getByText('Price')).toBeInTheDocument();
-            expect(screen.getByText('Quantity')).toBeInTheDocument();
+            expect(screen.getByText('Qty')).toBeInTheDocument();
         });
 
         it('should render item prices', () => {
@@ -86,13 +86,8 @@ describe('EquipmentList', () => {
         it('should show checked state for selected items', () => {
             render(<EquipmentList {...defaultProps} />);
 
-            // All 4 items are selected, each should have a checkmark button with the check SVG
-            const checkButtons = screen.getAllByRole('button');
-            expect(checkButtons).toHaveLength(4);
-
-            // Check that SVG checkmarks are present (indicating selected state)
-            const checkmarks = document.querySelectorAll('svg');
-            expect(checkmarks.length).toBeGreaterThanOrEqual(4);
+            const selectedButtons = screen.getAllByRole('button', { name: /deselect/i });
+            expect(selectedButtons).toHaveLength(4);
         });
 
         it('should call onToggle when item name is clicked', () => {
@@ -106,8 +101,8 @@ describe('EquipmentList', () => {
         it('should call onToggle when checkbox button is clicked', () => {
             render(<EquipmentList {...defaultProps} />);
 
-            const checkButtons = screen.getAllByRole('button');
-            fireEvent.click(checkButtons[0]);
+            const toggleButtons = screen.getAllByRole('button', { name: /select|deselect/i });
+            fireEvent.click(toggleButtons[0]);
 
             expect(mockOnToggle).toHaveBeenCalledWith(1);
         });
@@ -120,10 +115,10 @@ describe('EquipmentList', () => {
 
             render(<EquipmentList {...propsWithUnselected} />);
 
-            // Only 2 items (2 and 3) should be in the selected state (with checkmarks),
-            // implying that the remaining items are unselected.
-            const checkmarks = document.querySelectorAll('svg');
-            expect(checkmarks.length).toBe(2);
+            const selectedButtons = screen.getAllByRole('button', { name: /deselect/i });
+            const unselectedButtons = screen.getAllByRole('button', { name: /^select /i });
+            expect(selectedButtons).toHaveLength(2);
+            expect(unselectedButtons).toHaveLength(2);
         });
     });
 
