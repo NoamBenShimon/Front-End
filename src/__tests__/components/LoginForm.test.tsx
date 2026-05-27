@@ -7,6 +7,35 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 
+// Mock next-intl translations used by LoginForm
+jest.mock('next-intl', () => ({
+    useTranslations: (namespace: string) => {
+        const messages: Record<string, Record<string, string>> = {
+            Login: {
+                brand: 'Motzkin Store',
+                tagline: 'City of Kiryat Motzkin',
+                eyebrow: 'Parent sign-in',
+                title: 'Login',
+                intro: "Sign in to access this year's equipment lists and complete your order.",
+                usernameLabel: 'Username',
+                usernamePlaceholder: 'e.g. parent.name',
+                passwordLabel: 'Password',
+                passwordPlaceholder: 'password',
+                show: 'Show',
+                hide: 'Hide',
+                submit: 'Login',
+                submitting: 'Signing in...',
+                failed: 'Failed to login. Please try again.',
+                trouble: 'Trouble signing in? Call the municipal service centre at <phone>04-878-0900</phone> or dial <quickDial>*5470</quickDial>.',
+            },
+        };
+
+        const t = (key: string) => messages[namespace]?.[key] ?? key;
+        t.rich = (key: string) => messages[namespace]?.[key] ?? key;
+        return t;
+    },
+}));
+
 // Mock next/navigation
 const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -222,4 +251,6 @@ describe('LoginForm', () => {
         });
     });
 });
+
+
 

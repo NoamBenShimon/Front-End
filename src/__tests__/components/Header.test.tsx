@@ -8,11 +8,13 @@ import '@testing-library/jest-dom';
 
 // Mock next/navigation
 const mockReplace = jest.fn();
+const mockUsePathname = jest.fn(() => '/');
 jest.mock('next/navigation', () => ({
     useRouter: () => ({
         push: jest.fn(),
         replace: mockReplace,
     }),
+    usePathname: () => mockUsePathname(),
 }));
 
 // Mock next/link
@@ -33,6 +35,36 @@ jest.mock('next/image', () => {
     MockImage.displayName = 'MockImage';
     return MockImage;
 });
+
+// Mock next-intl translations used by Header
+jest.mock('next-intl', () => ({
+    useTranslations: (namespace: string) => {
+        const messages: Record<string, Record<string, string>> = {
+            Header: {
+                brand: 'Motzkin Store',
+                tagline: 'City of Kiryat Motzkin',
+                home: 'Home',
+                about: 'About',
+                contact: 'Contact',
+                cart: 'Cart',
+                signOut: 'Sign out',
+                openMenu: 'Open menu',
+                cartListSingular: 'list',
+                cartListPlural: 'lists',
+            },
+        };
+
+        return (key: string, values?: Record<string, unknown>) => {
+            if (namespace === 'Header' && key === 'cartAriaLabel') {
+                const count = values?.count ?? 0;
+                const list = values?.list ?? 'lists';
+                return `Cart, ${count} ${list}`;
+            }
+            return messages[namespace]?.[key] ?? key;
+        };
+    },
+    useLocale: () => 'en',
+}));
 
 // Auth mock state
 let mockIsAuthenticated = false;
@@ -105,13 +137,13 @@ describe('Header', () => {
         it('should NOT show cart icon when not authenticated', () => {
             render(<Header />);
 
-            expect(screen.queryByTitle(/view cart/i)).not.toBeInTheDocument();
+            expect(screen.queryByRole('link', { name: /cart/i })).not.toBeInTheDocument();
         });
 
         it('should NOT show logout button when not authenticated', () => {
             render(<Header />);
 
-            expect(screen.queryByRole('button', { name: /logout/i })).not.toBeInTheDocument();
+            expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument();
         });
     });
 
@@ -130,23 +162,23 @@ describe('Header', () => {
         it('should show logout button when authenticated', () => {
             render(<Header />);
 
-            expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /sign out/i })).toBeInTheDocument();
         });
 
-        it('should show empty cart icon when cart is empty', () => {
+        it('should show empty cart badge when cart is empty', () => {
             mockCartEntries = [];
             render(<Header />);
 
-            const cartImage = screen.getByAltText('Cart');
-            expect(cartImage).toHaveAttribute('src', '/cart-empty.svg');
+            const cartLink = screen.getByRole('link', { name: /cart/i });
+            expect(cartLink).not.toHaveTextContent(/1/);
         });
 
-        it('should show full cart icon when cart has items', () => {
+        it('should show cart badge when cart has items', () => {
             mockCartEntries = [{ id: '1', items: [] }];
             render(<Header />);
 
-            const cartImage = screen.getByAltText('Cart');
-            expect(cartImage).toHaveAttribute('src', '/cart-full.svg');
+            const cartLink = screen.getByRole('link', { name: /cart/i });
+            expect(cartLink).toHaveTextContent(/1/);
         });
 
         it('should link cart icon to cart page', () => {
@@ -165,7 +197,7 @@ describe('Header', () => {
         it('should call logout when logout button is clicked', () => {
             render(<Header />);
 
-            const logoutButton = screen.getByRole('button', { name: /logout/i });
+            const logoutButton = screen.getByRole('button', { name: /sign out/i });
             fireEvent.click(logoutButton);
 
             expect(mockLogout).toHaveBeenCalledTimes(1);
@@ -174,7 +206,7 @@ describe('Header', () => {
         it('should redirect to login page after logout', () => {
             render(<Header />);
 
-            const logoutButton = screen.getByRole('button', { name: /logout/i });
+            const logoutButton = screen.getByRole('button', { name: /sign out/i });
             fireEvent.click(logoutButton);
 
             expect(mockReplace).toHaveBeenCalledWith('/login');

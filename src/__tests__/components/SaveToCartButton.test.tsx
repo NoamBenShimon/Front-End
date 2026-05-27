@@ -17,6 +17,31 @@ jest.mock('@/contexts/CartContext', () => ({
 
 import SaveToCartButton from '@/components/SaveToCartButton';
 
+// Mock next-intl translations used by SaveToCartButton
+jest.mock('next-intl', () => ({
+    useTranslations: (namespace: string) => {
+        if (namespace !== 'SaveToCart') {
+            return (key: string) => key;
+        }
+        return (key: string, values?: Record<string, number>) => {
+            switch (key) {
+                case 'idle':
+                    return 'Save list to cart';
+                case 'saved':
+                    return 'Saved to cart';
+                case 'itemCount': {
+                    const count = values?.count ?? 0;
+                    return `(${count} ${count === 1 ? 'item' : 'items'})`;
+                }
+                case 'toast':
+                    return 'List saved to cart';
+                default:
+                    return key;
+            }
+        };
+    },
+}));
+
 describe('SaveToCartButton', () => {
     const defaultItems = [
         { id: 1, name: 'Notebook', quantity: 5 },
@@ -55,7 +80,7 @@ describe('SaveToCartButton', () => {
         it('should show item count in button text', () => {
             render(<SaveToCartButton {...defaultProps} />);
 
-            expect(screen.getByText(/save to cart/i)).toBeInTheDocument();
+            expect(screen.getByText(/save list to cart/i)).toBeInTheDocument();
             expect(screen.getByText(/2 items/i)).toBeInTheDocument();
         });
 
@@ -206,7 +231,7 @@ describe('SaveToCartButton', () => {
 
             fireEvent.click(screen.getByRole('button'));
 
-            expect(screen.getByText(/saved!/i)).toBeInTheDocument();
+            expect(screen.getByText(/saved to cart/i)).toBeInTheDocument();
         });
 
         it('should disable button temporarily after clicking', () => {
@@ -236,13 +261,13 @@ describe('SaveToCartButton', () => {
 
             fireEvent.click(screen.getByRole('button'));
 
-            expect(screen.getByText(/saved!/i)).toBeInTheDocument();
+            expect(screen.getByText(/saved to cart/i)).toBeInTheDocument();
 
             act(() => {
                 jest.advanceTimersByTime(3000);
             });
 
-            expect(screen.getByText(/save to cart/i)).toBeInTheDocument();
+            expect(screen.getByText(/save list to cart/i)).toBeInTheDocument();
         });
     });
 

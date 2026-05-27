@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import Layout from '@/components/Layout';
 import { useCart } from '@/contexts/CartContext';
 
@@ -10,6 +11,7 @@ function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get('session_id');
     const { clearCart } = useCart();
+    const t = useTranslations('PaymentSuccess');
     const [cleared, setCleared] = useState(false);
     const hasRun = useRef(false);
 
@@ -19,7 +21,7 @@ function PaymentSuccessContent() {
         if (hasRun.current || !hasValidSession) return;
         hasRun.current = true;
         clearCart();
-        setCleared(true);
+        queueMicrotask(() => setCleared(true));
     }, [clearCart, hasValidSession]);
 
     return (
@@ -36,24 +38,24 @@ function PaymentSuccessContent() {
                             </span>
                         </div>
 
-                        <p className="eyebrow mb-3 text-(--ok-700)">Order confirmed</p>
+                        <p className="eyebrow mb-3 text-(--ok-700)">{t('eyebrow')}</p>
                         <h1 className="font-display text-[2.1rem] sm:text-[2.4rem] tracking-tight text-(--ink-1) leading-tight mb-3">
-                            Thank you. Your order is on its way.
+                            {t('title')}
                         </h1>
                         <p className="text-[0.97rem] leading-relaxed text-ink-2 max-w-md mx-auto mb-8">
                             {hasValidSession
                                 ? cleared
-                                    ? 'Your payment was received and your cart has been cleared. You will receive a confirmation by email shortly.'
-                                    : 'Finalising your order…'
-                                : 'We could not confirm your payment session, but your cart has not been touched. Please contact support if you were charged.'}
+                                    ? t('clearedMessage')
+                                    : t('clearingMessage')
+                                : t('invalidMessage')}
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Link href="/" className="btn btn-primary">
-                                Return home
+                                {t('returnHome')}
                             </Link>
                             <Link href="/contact" className="btn btn-quiet">
-                                Need help?
+                                {t('needHelp')}
                             </Link>
                         </div>
                     </div>
@@ -64,6 +66,8 @@ function PaymentSuccessContent() {
 }
 
 export default function PaymentSuccessPage() {
+    const t = useTranslations('PaymentSuccess');
+
     return (
         <Suspense
             fallback={
@@ -73,7 +77,7 @@ export default function PaymentSuccessPage() {
                             <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
                             <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                         </svg>
-                        <p className="text-[0.95rem] text-ink-2">Loading…</p>
+                        <p className="text-[0.95rem] text-ink-2">{t('loading')}</p>
                     </div>
                 </Layout>
             }
