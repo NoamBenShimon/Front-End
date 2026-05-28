@@ -10,7 +10,7 @@
  */
 
 import { CartEntryPayload } from '@/types/cart';
-import { CreateOrderPayload, Order, PaymentSession, PaymentResult } from '@/types/order';
+import { CreateOrderPayload, Order, OrderHistoryEntry, PaymentSession, PaymentResult } from '@/types/order';
 
 export type CartApiItem = {
     id: number | string;
@@ -267,6 +267,23 @@ export async function getOrder(orderId: string): Promise<Order> {
     });
     if (!res.ok) return parseError(res, 'Failed to fetch order');
     return res.json();
+}
+
+/**
+ * Fetches the authenticated user's full order history.
+ * The backend reads the user from the session cookie.
+ *
+ * @returns Promise resolving to the user's past orders, most recent first
+ * @throws {Error} If the history fetch fails or the user is unauthenticated
+ */
+export async function getOrderHistory(): Promise<OrderHistoryEntry[]> {
+    const res = await fetch(`${getApiBase()}/api/history`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+    if (!res.ok) return parseError(res, 'Failed to fetch order history');
+    const data = await res.json();
+    return Array.isArray(data) ? (data as OrderHistoryEntry[]) : [];
 }
 
 // =============================================================================
