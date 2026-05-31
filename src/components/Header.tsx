@@ -82,6 +82,15 @@ export default function Header() {
                                 <div className="hair-v h-5" />
 
                                 <Link
+                                    href="/orders"
+                                    className="relative inline-flex items-center gap-2 nav-link"
+                                    aria-current={isCurrent('/orders') ? 'page' : undefined}
+                                >
+                                    <OrdersIcon />
+                                    <span className="text-[var(--ink-2)]">{t('orders')}</span>
+                                </Link>
+
+                                <Link
                                     href="/cart"
                                     className="relative inline-flex items-center gap-2 nav-link"
                                     aria-label={cartAriaLabel}
@@ -146,6 +155,17 @@ export default function Header() {
                                 <>
                                     <li>
                                         <Link
+                                            href="/orders"
+                                            onClick={() => setMobileOpen(false)}
+                                            className="flex items-center gap-2 py-2.5 px-2 text-[0.95rem] text-[var(--ink-1)] hover:bg-[var(--surface-sunken)] rounded"
+                                            aria-current={isCurrent('/orders') ? 'page' : undefined}
+                                        >
+                                            <OrdersIcon />
+                                            {t('orders')}
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
                                             href="/cart"
                                             onClick={() => setMobileOpen(false)}
                                             className="flex items-center justify-between py-2.5 px-2 text-[0.95rem] text-[var(--ink-1)] hover:bg-[var(--surface-sunken)] rounded"
@@ -182,6 +202,31 @@ export default function Header() {
                 )}
             </nav>
         </header>
+    );
+}
+
+function OrdersIcon() {
+    return (
+        <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+        >
+            <path
+                d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M8 10h8M8 14h8M8 18h5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+            />
+        </svg>
     );
 }
 

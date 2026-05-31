@@ -64,6 +64,32 @@ export interface PaymentSession {
     orderId: string;
 }
 
+/** A single line item within a historical order as returned by GET /api/history */
+export interface OrderHistoryItem {
+    /** Display name of the equipment item */
+    equipment_name: string;
+    /** Quantity purchased */
+    quantity: number;
+    /** Unit price at the time of purchase */
+    price: number;
+    /** Line total (price * quantity) */
+    total_price: number;
+}
+
+/** A past order belonging to the authenticated user, as returned by GET /api/history */
+export interface OrderHistoryEntry {
+    /** Backend order identifier */
+    order_id: string;
+    /** Grade identifier the order was placed against */
+    grade_id: string;
+    /** Date string formatted by the backend as "YYYY-MM-DD HH:mm:ss" */
+    purchase_date: string;
+    /** Order grand total */
+    total_amount: number;
+    /** Items included in the order */
+    items: OrderHistoryItem[];
+}
+
 /** The result passed back from the payment provider after redirect */
 export interface PaymentResult {
     /** Our internal order ID */
