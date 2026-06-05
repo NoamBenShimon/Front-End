@@ -36,7 +36,7 @@ COPY package.json package-lock.json* ./
 
 # Install all dependencies (including devDependencies for build)
 # Using --frozen-lockfile equivalent ensures reproducible builds
-RUN npm ci
+RUN npm install
 
 # ------------------------------------------------------------------------------
 # Stage 3: Development - Hot reload enabled
@@ -105,7 +105,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 # Include runtime environment file so Next.js can load it at startup
-COPY --from=builder /app/.env ./.env
+#COPY --from=builder /app/.env ./.env
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
